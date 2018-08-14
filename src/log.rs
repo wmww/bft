@@ -1,4 +1,4 @@
-pub enum Priority {
+pub enum Severity {
     Debug,
     //InternalWarning,
     InternalError,
@@ -6,15 +6,15 @@ pub enum Priority {
     //Error,
 }
 
-pub fn message(priority: Priority, msg: &str) {
+pub fn message(severity: Severity, msg: &str) {
     println!(
         "{}: {}",
-        match priority {
-            Priority::Debug => "Debug",
-            //Priority::InternalWarning => "Internal warning",
-            Priority::InternalError => "Internal error",
-            //Priority::Warning => "Warning",
-            //Priority::Error => "Error",
+        match severity {
+            Severity::Debug => "Debug",
+            //Severity::InternalWarning => "Internal warning",
+            Severity::InternalError => "Internal error",
+            //Severity::Warning => "Warning",
+            //Severity::Error => "Error",
         },
         msg
     );
@@ -23,7 +23,7 @@ pub fn message(priority: Priority, msg: &str) {
 #[macro_export]
 macro_rules! bft_error {
     ($ops:ident, $($arg:tt)*) => ({
-        log::message(log::Priority::InternalError, &format!($($arg)*));
+        log::message(log::Severity::InternalError, &format!($($arg)*));
         std::process::exit(1);
     })
 }
@@ -32,7 +32,7 @@ macro_rules! bft_error {
 macro_rules! bft_log {
     ($ops:ident, $($arg:tt)*) => ({
         if $ops.debug {
-            log::message(log::Priority::Debug, &format!($($arg)*));
+            log::message(log::Severity::Debug, &format!($($arg)*));
         }
     })
 }

@@ -2,26 +2,14 @@
 #[macro_use]
 mod log;
 mod options;
-
-use std::io::Read;
+mod source;
 
 fn main() {
     let options = options::Options::new_default().with_cmd_line();
-    if let Some(file) = options.filepath {
-        bft_log!(options, "Loading {}", file);
-        let mut f = match std::fs::File::open(file.clone()) {
-            Result::Ok(v) => v,
-            Result::Err(e) => {
-                bft_error!(options, "file {} not found: {}", file, e);
-            }
+    if let Some(ref file) = options.filepath {
+        let _source = match source::File::open(file, &options) {
+            Ok(s) => s,
+            Err(e) => bft_error!(options, "{}", e),
         };
-        bft_log!(options, "Reading {}", file);
-        let mut contents = String::new();
-        match f.read_to_string(&mut contents) {
-            Result::Ok(_) => (),
-            Result::Err(e) => {
-                bft_error!(options, "error reading {}: {}", file, e);
-            }
-        }
     }
 }
