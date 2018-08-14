@@ -1,34 +1,43 @@
+
+#[macro_use]
+mod log;
 mod options;
-
-pub enum Priority {
-    Debug,
-    InternalWarning,
-    InternalError,
-    Warning,
-    Error,
-}
-
-pub fn message(priority: Priority, msg: &str) {
-    println!(
-        "{}: {}",
-        match priority {
-            Priority::Debug => "Debug",
-            Priority::InternalWarning => "Internal warning",
-            Priority::InternalError => "Internal error",
-            Priority::Warning => "Warning",
-            Priority::Error => "Error",
-        },
-        msg
-    );
-}
-
-pub fn debug(msg: &str) {
-    message(Priority::Debug, msg);
-}
 
 fn main() {
     let options = options::Options::new_default().with_cmd_line();
     if let Some(s) = options.filepath {
-        debug(&format!("Loading source code: {}", s));
+        bft_log!(options, "Loading source code: {}", s);
+        /*
+        if options.debug {
+            eprintln!("file {}:", &file);
+            eprint!("opening...");
+        }
+        let mut f = match File::open(file.clone()) {
+            Result::Ok(v) => v,
+            Result::Err(e) => {
+                eprintln!("file {} not found: {}", &file, e);
+                continue;
+            }
+        };
+
+        if debug {
+            eprint!("reading...");
+        }
+        let mut contents = String::new();
+        match f.read_to_string(&mut contents) {
+            Result::Ok(_) => (),
+            Result::Err(e) => {
+                eprintln!("error reading {}: {}", &file, e);
+                continue;
+            }
+        }
+
+        if debug {
+            eprint!("tokenizing...");
+        }
+        let mut values: Vec<String> = vec![];
+        for i in re.find_iter(&contents) {
+            values.push(contents[i.start()..i.end()].to_string());
+        }*/
     }
 }
