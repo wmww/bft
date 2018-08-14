@@ -2,5 +2,7 @@
 name = "bft"
 version = "0.1.0"
 authors = ["William Wold <wm@wmww.sh>"]
+description = "Tools for linting, formatting and running Brainfuck code"
 
 [dependencies]
+clap = "2.32"
