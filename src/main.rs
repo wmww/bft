@@ -3,41 +3,25 @@
 mod log;
 mod options;
 
+use std::io::Read;
+
 fn main() {
     let options = options::Options::new_default().with_cmd_line();
-    if let Some(s) = options.filepath {
-        bft_log!(options, "Loading source code: {}", s);
-        /*
-        if options.debug {
-            eprintln!("file {}:", &file);
-            eprint!("opening...");
-        }
-        let mut f = match File::open(file.clone()) {
+    if let Some(file) = options.filepath {
+        bft_log!(options, "Loading {}", file);
+        let mut f = match std::fs::File::open(file.clone()) {
             Result::Ok(v) => v,
             Result::Err(e) => {
-                eprintln!("file {} not found: {}", &file, e);
-                continue;
+                bft_error!(options, "file {} not found: {}", file, e);
             }
         };
-
-        if debug {
-            eprint!("reading...");
-        }
+        bft_log!(options, "Reading {}", file);
         let mut contents = String::new();
         match f.read_to_string(&mut contents) {
             Result::Ok(_) => (),
             Result::Err(e) => {
-                eprintln!("error reading {}: {}", &file, e);
-                continue;
+                bft_error!(options, "error reading {}: {}", file, e);
             }
         }
-
-        if debug {
-            eprint!("tokenizing...");
-        }
-        let mut values: Vec<String> = vec![];
-        for i in re.find_iter(&contents) {
-            values.push(contents[i.start()..i.end()].to_string());
-        }*/
     }
 }
