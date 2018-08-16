@@ -1,4 +1,3 @@
-#[macro_use]
 use log;
 use options;
 
@@ -24,5 +23,11 @@ impl File {
             Result::Err(e) => return Err(e.to_string()),
         }
         Ok(File{path: path.to_string(), contents: contents})
+    }
+}
+
+impl std::fmt::Display for File {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}:\n{}", self.path, self.contents)
     }
 }
