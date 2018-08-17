@@ -1,16 +1,18 @@
-
 #[macro_use]
 mod log;
 mod options;
 mod source;
+mod lexer;
+mod bf;
 
 fn main() {
     let options = options::Options::new_default().with_cmd_line();
-    if let Some(ref file) = options.filepath {
-        let source = match source::File::open(file, &options) {
+    if let Some(ref path) = options.filepath {
+        let source = match source::File::open(path, &options) {
             Ok(s) => s,
             Err(e) => bft_error!(options, "{}", e),
         };
         println!("source: {}", source);
+        let _tokens = lexer::Seq::new(&source);
     }
 }

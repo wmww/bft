@@ -1,3 +1,5 @@
+// use source;
+
 pub enum Severity {
     Debug,
     //InternalWarning,
@@ -19,6 +21,20 @@ pub fn message(severity: Severity, msg: &str) {
         msg
     );
 }
+
+/*
+pub struct Issue {
+    severity: Severity,
+    span: Option<source::Span>,
+    message: String,
+}
+
+impl Issue {
+    fn show(&self) {
+        message(self.severity, format!("{}:\n    {}", self.span,  self.message));
+    }
+}
+*/
 
 #[macro_export]
 macro_rules! bft_error {
