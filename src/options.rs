@@ -3,6 +3,7 @@ use std;
 extern crate clap;
 use self::clap::{App, Arg};
 
+#[derive(Debug)]
 pub struct Options {
     pub filepath: Option<String>, // code to run
     pub fixup_file: bool,         // if to automatically fix problems found in the file

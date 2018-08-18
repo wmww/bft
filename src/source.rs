@@ -5,6 +5,7 @@ use std;
 use std::fmt;
 use std::io::Read;
 
+#[derive(Debug)]
 pub struct File {
     pub path: Option<String>,
     pub contents: String,
@@ -40,6 +41,7 @@ impl fmt::Display for File {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Span<'a> {
     pub source: &'a File,
     pub offset: u32,
