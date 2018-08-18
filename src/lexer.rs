@@ -1,62 +1,9 @@
 use bf;
 use source;
+use token;
+use token::Token;
+
 use std;
-use std::fmt;
-
-#[derive(Debug)]
-pub enum Token<'src> {
-    Linebreak {
-        span: source::Span<'src>,
-        newline: bool,
-    }, // if its a `;`, newline is false
-    Ident {
-        span: source::Span<'src>,
-        value: String,
-    },
-    String {
-        span: source::Span<'src>,
-        value: String,
-    },
-    OpenBrace(source::Span<'src>),
-    CloseBrace(source::Span<'src>),
-    Colon(source::Span<'src>),
-    Bf {
-        span: source::Span<'src>,
-        op: bf::Op,
-    },
-}
-
-impl<'src> Token<'src> {
-    fn span(&self) -> &'src source::Span {
-        match self {
-            Token::Linebreak { span, newline: _ } => span,
-            Token::Ident { span, value: _ } => span,
-            Token::String { span, value: _ } => span,
-            Token::OpenBrace(span) => span,
-            Token::CloseBrace(span) => span,
-            Token::Colon(span) => span,
-            Token::Bf { span, op: _ } => span,
-        }
-    }
-}
-
-impl<'s> fmt::Display for Token<'s> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Token::Linebreak { span: _, newline } => {
-                write!(f, "{}", if *newline { "\\n" } else { ";" })
-            }
-            Token::Ident { span: _, value } => write!(f, "${}", value),
-            Token::String { span: _, value } => {
-                write!(f, "\"{}\"", value.chars().map(|c| c).collect::<String>())
-            }
-            Token::OpenBrace(_) => write!(f, "{{"),
-            Token::CloseBrace(_) => write!(f, "}}"),
-            Token::Colon(_) => write!(f, ":"),
-            Token::Bf { span: _, op } => write!(f, "{}", op),
-        }
-    }
-}
 
 pub struct Tokens<'s> {
     source: &'s source::File,
@@ -64,19 +11,45 @@ pub struct Tokens<'s> {
     offset: usize,
 }
 
+impl<'s> Tokens<'s> {
+    fn advance_to(&mut self, new_offset: usize) -> source::Span<'s> {
+        let ret = source::Span::new(self.source, self.offset, new_offset - self.offset);
+        self.offset += new_offset;
+        ret
+    }
+}
+
 impl<'s> Iterator for Tokens<'s> {
     type Item = Token<'s>;
 
     fn next(&mut self) -> Option<Token<'s>> {
-        let (o, c) = self.chars.next()?;
+        let (mut o, c) = self.chars.next()?;
         match c {
             '\n' => Some(Token::Linebreak {
-                span: source::Span::new(self.source, self.offset, o - self.offset),
+                span: self.advance_to(o),
                 newline: true,
             }),
-            '0'...'9' | 'a'...'z' | 'A'...'Z' => Some(Token::Ident {
-                span: source::Span::new(self.source, self.offset, o - self.offset),
-                value: c.to_string(),
+            ';' => Some(Token::Linebreak {
+                span: self.advance_to(o),
+                newline: false,
+            }),
+            '0'...'9' | 'a'...'z' | 'A'...'Z' => Some({
+                let mut next = self.chars.clone();
+                let mut ident = c.to_string();
+                while let Some((i, c)) = next.next() {
+                    match c {
+                        '0'...'9' | 'a'...'z' | 'A'...'Z' => {
+                            ident.push(c);
+                            o = i;
+                            self.chars = next.clone();
+                        }
+                        _ => break,
+                    }
+                }
+                Token::Ident {
+                    span: self.advance_to(o),
+                    value: ident,
+                }
             }),
             _ => None,
         }
@@ -93,35 +66,5 @@ impl<'src> IntoIterator for &'src source::File {
             chars: self.contents.char_indices(),
             offset: 0,
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct Seq<'src> {
-    pub tokens: Vec<Token<'src>>,
-    pub file: &'src source::File,
-}
-
-impl<'src> Seq<'src> {
-    pub fn new(file: &source::File) -> Seq {
-        Seq {
-            tokens: file.into_iter().collect(),
-            file: file,
-        }
-    }
-}
-
-impl<'s> fmt::Display for Seq<'s> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.tokens.iter().fold(String::new(), |s, i| format!(
-                "{}{}{}",
-                s,
-                if s.is_empty() { "" } else { " " },
-                i
-            ))
-        )
     }
 }

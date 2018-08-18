@@ -4,6 +4,7 @@ mod bf;
 mod lexer;
 mod options;
 mod source;
+mod token;
 
 fn main() {
     let options = options::Options::new_default().with_cmd_line();
@@ -14,7 +15,7 @@ fn main() {
         };
         println!("source: {}", source);
         println!();
-        let tokens = lexer::Seq::new(&source);
+        let tokens = token::Seq::new(&source);
         println!("tokens: {}", tokens);
     }
 }
