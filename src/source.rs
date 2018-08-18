@@ -42,22 +42,26 @@ impl fmt::Display for File {
 }
 
 #[derive(Debug, Clone)]
-pub struct Span<'a> {
-    pub source: &'a File,
-    pub offset: u32,
-    pub length: u32,
-    pub line: u32,
-    pub character: u32,
+pub struct Span<'s> {
+    pub source: &'s File,
+    pub byte_offset: usize,
+    pub byte_length: usize,
+}
+
+impl<'s> Span<'s> {
+    pub fn new(src: &File, offset: usize, length: usize) -> Span {
+        assert!(src.contents.is_char_boundary(offset));
+        assert!(src.contents.is_char_boundary(offset + length as usize));
+        Span {
+            source: src,
+            byte_offset: offset,
+            byte_length: length,
+        }
+    }
 }
 
 impl<'a> fmt::Display for Span<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}:{}:{}",
-            self.source.unwrap_path(),
-            self.line,
-            self.character
-        )
+        write!(f, "{}:{}", self.source.unwrap_path(), self.byte_offset,)
     }
 }

@@ -15,6 +15,6 @@ fn main() {
         println!("source: {}", source);
         println!();
         let tokens = lexer::Seq::new(&source);
-        println!("tokens: {:?}", tokens);
+        println!("tokens: {}", tokens);
     }
 }

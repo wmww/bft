@@ -1,6 +1,7 @@
 use bf;
 use source;
 use std;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum Token<'src> {
@@ -26,16 +27,6 @@ pub enum Token<'src> {
 }
 
 impl<'src> Token<'src> {
-    fn next(file: &source::File, mut iter: std::str::Chars) -> Option<Token<'src>> {
-        match iter.next().unwrap_or('\0') {
-            '\0' => None,
-            c => {
-                println!("{}", c);
-                None
-            }
-        }
-    }
-
     fn span(&self) -> &'src source::Span {
         match self {
             Token::Linebreak { span, newline: _ } => span,
@@ -49,17 +40,44 @@ impl<'src> Token<'src> {
     }
 }
 
-pub struct Tokens<'src> {
-    span: source::Span<'src>,
-    chars: std::str::Chars<'src>,
+impl<'s> fmt::Display for Token<'s> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Token::Linebreak { span: _, newline } => {
+                write!(f, "{}", if *newline { "\\n" } else { ";" })
+            }
+            Token::Ident { span: _, value } => write!(f, "${}", value),
+            Token::String { span: _, value } => {
+                write!(f, "\"{}\"", value.chars().map(|c| c).collect::<String>())
+            }
+            Token::OpenBrace(_) => write!(f, "{{"),
+            Token::CloseBrace(_) => write!(f, "}}"),
+            Token::Colon(_) => write!(f, ":"),
+            Token::Bf { span: _, op } => write!(f, "{}", op),
+        }
+    }
 }
 
-impl<'src> Iterator for Tokens<'src> {
-    type Item = Token<'src>;
+pub struct Tokens<'s> {
+    source: &'s source::File,
+    chars: std::str::CharIndices<'s>,
+    offset: usize,
+}
 
-    fn next(&mut self) -> Option<Token<'src>> {
-        match self.chars.next()? {
-            '0'...'9' | 'a'...'z' | 'A'...'Z' => Some(Token::OpenBrace(self.span.clone())),
+impl<'s> Iterator for Tokens<'s> {
+    type Item = Token<'s>;
+
+    fn next(&mut self) -> Option<Token<'s>> {
+        let (o, c) = self.chars.next()?;
+        match c {
+            '\n' => Some(Token::Linebreak {
+                span: source::Span::new(self.source, self.offset, o - self.offset),
+                newline: true,
+            }),
+            '0'...'9' | 'a'...'z' | 'A'...'Z' => Some(Token::Ident {
+                span: source::Span::new(self.source, self.offset, o - self.offset),
+                value: c.to_string(),
+            }),
             _ => None,
         }
     }
@@ -71,14 +89,9 @@ impl<'src> IntoIterator for &'src source::File {
 
     fn into_iter(self) -> Tokens<'src> {
         Tokens {
-            chars: self.contents.chars(),
-            span: source::Span {
-                source: self,
-                offset: 0,
-                length: 0,
-                line: 1,
-                character: 1,
-            },
+            source: self,
+            chars: self.contents.char_indices(),
+            offset: 0,
         }
     }
 }
@@ -95,5 +108,20 @@ impl<'src> Seq<'src> {
             tokens: file.into_iter().collect(),
             file: file,
         }
+    }
+}
+
+impl<'s> fmt::Display for Seq<'s> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.tokens.iter().fold(String::new(), |s, i| format!(
+                "{}{}{}",
+                s,
+                if s.is_empty() { "" } else { " " },
+                i
+            ))
+        )
     }
 }
