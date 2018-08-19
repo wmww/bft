@@ -12,6 +12,22 @@ pub enum Op {
     Close,
 }
 
+impl Op {
+    pub fn new(c: char) -> Option<Op> {
+        match c {
+            '+' => Some(Op::Plus),
+            '-' => Some(Op::Minus),
+            '<' => Some(Op::Left),
+            '>' => Some(Op::Right),
+            '.' => Some(Op::Output),
+            ',' => Some(Op::Input),
+            '[' => Some(Op::Open),
+            ']' => Some(Op::Close),
+            _ => None,
+        }
+    }
+}
+
 impl fmt::Display for Op {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
