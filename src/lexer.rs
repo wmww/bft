@@ -1,5 +1,6 @@
 use bf;
 use source;
+use std::str::CharIndices;
 use token;
 use token::Token;
 
@@ -7,24 +8,33 @@ use std;
 
 pub struct Tokens<'s> {
     source: &'s source::File,
-    chars: std::str::CharIndices<'s>,
+    chars: CharIndices<'s>,
 }
 
 impl<'s> Tokens<'s> {
-    fn advance_to(&mut self, chars: std::str::CharIndices<'s>) -> source::Span<'s> {
-        let start = match self.chars.clone().next() {Some((i, _)) => i, None => self.source.contents.len() };
-        let end = match chars.clone().next() { Some((i, _)) => i, None => self.source.contents.len() };
-        assert!(start <= end);
-        self.chars = chars;
+    fn offset_of(&self, i: &CharIndices) -> usize {
+        match i.clone().next() {
+            Some((i, _)) => i,
+            None => self.source.contents.len(),
+        }
+    }
+
+    fn span_between(&self, start: &CharIndices, end: &CharIndices) -> source::Span<'s> {
+        let start = self.offset_of(start);
+        let end = self.offset_of(end);
         source::Span::new(self.source, start, end - start)
     }
 
-    fn lex_bf(&mut self) -> Option<Token<'s>> {
+    fn lex_bf(&self) -> Option<(Token<'s>, CharIndices<'s>)> {
         let mut chars = self.chars.clone();
         let (_, c) = chars.next()?;
         let op = bf::Op::new(c)?;
-        let span = self.advance_to(chars);
-        Some(Token::Bf{span: span, op: op})
+        let span = self.span_between(&self.chars, &chars);
+        Some((Token::Bf { span: span, op: op }, chars))
+    }
+
+    fn lex_ident(&self) -> Option<(Token<'s>, CharIndices<'s>)> {
+        None
     }
 }
 
@@ -33,8 +43,11 @@ impl<'s> Iterator for Tokens<'s> {
 
     fn next(&mut self) -> Option<Token<'s>> {
         loop {
-            match self.lex_bf() {
-                Some(t) => return Some(t),
+            match None.or_else(|| self.lex_bf()).or_else(|| self.lex_ident()) {
+                Some((t, i)) => {
+                    self.chars = i;
+                    return Some(t);
+                }
                 None => self.chars.next()?,
             };
         }
@@ -94,7 +107,6 @@ impl<'src> IntoIterator for &'src source::File {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -157,12 +169,10 @@ mod tests {
         let tokens = token::Seq::lex(&source);
         assert_eq!(
             tokens.tokens,
-            vec![
-                Token::Ident {
-                    span: source::Span::new(&source, 0, 1),
-                    value: "k".to_string(),
-                },
-            ],
+            vec![Token::Ident {
+                span: source::Span::new(&source, 0, 1),
+                value: "k".to_string(),
+            }],
         );
     }
 
@@ -172,12 +182,10 @@ mod tests {
         let tokens = token::Seq::lex(&source);
         assert_eq!(
             tokens.tokens,
-            vec![
-                Token::Ident {
-                    span: source::Span::new(&source, 0, 3),
-                    value: "1xY".to_string(),
-                },
-            ],
+            vec![Token::Ident {
+                span: source::Span::new(&source, 0, 3),
+                value: "1xY".to_string(),
+            }],
         );
     }
 
