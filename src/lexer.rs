@@ -94,3 +94,60 @@ impl<'src> IntoIterator for &'src source::File {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lex_bf_complex_a() {
+        let source = source::File::new(",[>>+<<-].".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![
+                Token::Bf {
+                    span: source::Span::new(&source, 0, 1),
+                    op: bf::Op::Input,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 1, 1),
+                    op: bf::Op::Open,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 2, 1),
+                    op: bf::Op::Right,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 3, 1),
+                    op: bf::Op::Right,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 4, 1),
+                    op: bf::Op::Plus,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 5, 1),
+                    op: bf::Op::Left,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 6, 1),
+                    op: bf::Op::Left,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 7, 1),
+                    op: bf::Op::Minus,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 8, 1),
+                    op: bf::Op::Close,
+                },
+                Token::Bf {
+                    span: source::Span::new(&source, 9, 1),
+                    op: bf::Op::Output,
+                },
+            ],
+        );
+    }
+}
