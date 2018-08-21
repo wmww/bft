@@ -150,4 +150,61 @@ mod tests {
             ],
         );
     }
+
+    #[test]
+    fn lex_single_char_ident() {
+        let source = source::File::new("k".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![
+                Token::Ident {
+                    span: source::Span::new(&source, 0, 1),
+                    value: "k".to_string(),
+                },
+            ],
+        );
+    }
+
+    #[test]
+    fn lex_single_ident() {
+        let source = source::File::new("1xY".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![
+                Token::Ident {
+                    span: source::Span::new(&source, 0, 3),
+                    value: "1xY".to_string(),
+                },
+            ],
+        );
+    }
+
+    #[test]
+    fn lex_idents_a() {
+        let source = source::File::new("Test of 1 iD3NT1fi3r".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![
+                Token::Ident {
+                    span: source::Span::new(&source, 0, 4),
+                    value: "Test".to_string(),
+                },
+                Token::Ident {
+                    span: source::Span::new(&source, 5, 2),
+                    value: "if".to_string(),
+                },
+                Token::Ident {
+                    span: source::Span::new(&source, 8, 1),
+                    value: "1".to_string(),
+                },
+                Token::Ident {
+                    span: source::Span::new(&source, 10, 10),
+                    value: "iD3NT1fi3r".to_string(),
+                },
+            ],
+        );
+    }
 }
