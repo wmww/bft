@@ -5,7 +5,7 @@ use std;
 use std::fmt;
 use std::io::Read;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct File {
     pub path: Option<String>,
     pub contents: String,
@@ -30,6 +30,13 @@ impl File {
         })
     }
 
+    pub fn new(contents: String) -> File {
+        File {
+            path: None,
+            contents: contents,
+        }
+    }
+
     pub fn unwrap_path(&self) -> String {
         self.path.clone().unwrap_or("[UNKNOWN]".to_string())
     }
@@ -41,7 +48,7 @@ impl fmt::Display for File {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Span<'s> {
     pub source: &'s File,
     pub byte_offset: usize,

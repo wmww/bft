@@ -8,15 +8,23 @@ use std;
 pub struct Tokens<'s> {
     source: &'s source::File,
     chars: std::str::CharIndices<'s>,
-    offset: usize,
 }
 
 impl<'s> Tokens<'s> {
-    fn advance_to(&mut self, new_offset: usize) -> source::Span<'s> {
-        assert!(new_offset >= self.offset);
-        let ret = source::Span::new(self.source, self.offset, new_offset - self.offset);
-        self.offset = new_offset;
-        ret
+    fn advance_to(&mut self, chars: std::str::CharIndices<'s>) -> source::Span<'s> {
+        let start = match self.chars.clone().next() {Some((i, _)) => i, None => self.source.contents.len() };
+        let end = match chars.clone().next() { Some((i, _)) => i, None => self.source.contents.len() };
+        assert!(start <= end);
+        self.chars = chars;
+        source::Span::new(self.source, start, end - start)
+    }
+
+    fn lex_bf(&mut self) -> Option<Token<'s>> {
+        let mut chars = self.chars.clone();
+        let (_, c) = chars.next()?;
+        let op = bf::Op::new(c)?;
+        let span = self.advance_to(chars);
+        Some(Token::Bf{span: span, op: op})
     }
 }
 
@@ -25,13 +33,17 @@ impl<'s> Iterator for Tokens<'s> {
 
     fn next(&mut self) -> Option<Token<'s>> {
         loop {
+            match self.lex_bf() {
+                Some(t) => return Some(t),
+                None => self.chars.next()?,
+            };
+        }
+        /*loop {
+
             if let Some(t) = {
                 let (mut o, c) = self.chars.next()?;
-                if let Some(op) = bf::Op::new(c) {
-                    Some(Token::Bf {
-                        span: self.advance_to(o),
-                        op: op,
-                    })
+                if let Some(token) = self.lex_bf() {
+                    token
                 } else {
                     match c {
                         '\n' => Some(Token::Linebreak {
@@ -62,11 +74,12 @@ impl<'s> Iterator for Tokens<'s> {
                         }),
                         _ => None,
                     }
+                    None
                 }
             } {
                 return Some(t);
             }
-        }
+        }*/
     }
 }
 
@@ -78,7 +91,6 @@ impl<'src> IntoIterator for &'src source::File {
         Tokens {
             source: self,
             chars: self.contents.char_indices(),
-            offset: 0,
         }
     }
 }

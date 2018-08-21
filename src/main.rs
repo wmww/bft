@@ -15,7 +15,7 @@ fn main() {
         };
         println!("source: {}", source);
         println!();
-        let tokens = token::Seq::new(&source);
+        let tokens = token::Seq::lex(&source);
         println!("tokens: {}", tokens);
     }
 }

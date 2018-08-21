@@ -2,7 +2,7 @@ use bf;
 use source;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Token<'src> {
     Linebreak {
         span: source::Span<'src>,
@@ -64,7 +64,7 @@ pub struct Seq<'src> {
 }
 
 impl<'src> Seq<'src> {
-    pub fn new(file: &source::File) -> Seq {
+    pub fn lex(file: &source::File) -> Seq {
         Seq {
             tokens: file.into_iter().collect(),
             file: file,
