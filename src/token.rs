@@ -2,7 +2,7 @@ use bf;
 use source;
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub enum Token<'src> {
     Linebreak {
         span: source::Span<'src>,
@@ -26,7 +26,7 @@ pub enum Token<'src> {
 }
 
 impl<'src> Token<'src> {
-    fn span(&self) -> &'src source::Span {
+    pub fn span(&self) -> &'src source::Span {
         match self {
             Token::Linebreak { span, newline: _ } => span,
             Token::Ident { span, value: _ } => span,
@@ -54,6 +54,12 @@ impl<'s> fmt::Display for Token<'s> {
             Token::Colon(_) => write!(f, ":"),
             Token::Bf { span: _, op } => write!(f, "{}", op),
         }
+    }
+}
+
+impl<'s> fmt::Debug for Token<'s> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
     }
 }
 
