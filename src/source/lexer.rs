@@ -1,8 +1,8 @@
 use bf;
 use source;
+use source::token;
+use source::token::Token;
 use std::str::CharIndices;
-use token;
-use token::Token;
 
 pub struct Tokens<'s> {
     source: &'s source::File,
@@ -107,6 +107,13 @@ impl<'src> IntoIterator for &'src source::File {
     }
 }
 
+pub fn lex(file: &source::File) -> token::Seq {
+    token::Seq {
+        tokens: file.into_iter().collect(),
+        file: file,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -114,7 +121,7 @@ mod tests {
     #[test]
     fn lex_bf_complex_0() {
         let source = source::File::new(",[>>+<<-].".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![
@@ -165,7 +172,7 @@ mod tests {
     #[test]
     fn lex_single_char_ident() {
         let source = source::File::new("k".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![Token::Ident {
@@ -178,7 +185,7 @@ mod tests {
     #[test]
     fn lex_single_ident() {
         let source = source::File::new("1xY".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![Token::Ident {
@@ -191,7 +198,7 @@ mod tests {
     #[test]
     fn lex_idents_0() {
         let source = source::File::new("Test of 1 iD3NT1fi3r".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![
@@ -218,7 +225,7 @@ mod tests {
     #[test]
     fn lex_semicolon() {
         let source = source::File::new(";".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![Token::Linebreak {
@@ -231,7 +238,7 @@ mod tests {
     #[test]
     fn lex_newline() {
         let source = source::File::new("\n".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![Token::Linebreak {
@@ -244,7 +251,7 @@ mod tests {
     #[test]
     fn lex_open_brace() {
         let source = source::File::new("{".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![Token::OpenBrace(source::Span::from_components(
@@ -256,7 +263,7 @@ mod tests {
     #[test]
     fn lex_close_brace() {
         let source = source::File::new("}".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![Token::CloseBrace(source::Span::from_components(
@@ -268,7 +275,7 @@ mod tests {
     #[test]
     fn lex_colon() {
         let source = source::File::new(":".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![Token::Colon(source::Span::from_components(&source, 0, 1))],
@@ -278,7 +285,7 @@ mod tests {
     #[test]
     fn lex_all_0() {
         let source = source::File::new("_abc: {{\n    [-]\n}^Xy1;}".to_string());
-        let tokens = token::Seq::lex(&source);
+        let tokens = lex(&source);
         assert_eq!(
             tokens.tokens,
             vec![

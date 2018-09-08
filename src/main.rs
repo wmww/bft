@@ -1,10 +1,8 @@
 #[macro_use]
 mod log;
 mod bf;
-mod lexer;
 mod options;
 mod source;
-mod token;
 
 fn main() {
     let options = options::Options::new_default().with_cmd_line();
@@ -15,7 +13,7 @@ fn main() {
         };
         println!("source: {}", source);
         println!();
-        let tokens = token::Seq::lex(&source);
+        let tokens = source::lex(&source);
         println!("tokens: {}", tokens);
     }
 }

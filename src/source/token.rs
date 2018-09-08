@@ -69,15 +69,6 @@ pub struct Seq<'src> {
     pub file: &'src source::File,
 }
 
-impl<'src> Seq<'src> {
-    pub fn lex(file: &source::File) -> Seq {
-        Seq {
-            tokens: file.into_iter().collect(),
-            file: file,
-        }
-    }
-}
-
 impl<'s> fmt::Display for Seq<'s> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
