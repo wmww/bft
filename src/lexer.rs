@@ -10,13 +10,11 @@ pub struct Tokens<'s> {
 }
 
 impl<'s> Tokens<'s> {
-    fn span_to(&mut self, end: CharIndices<'s>) -> source::Span<'s> {
-        let start = self.chars.clone();
-        self.chars = end.clone();
-        source::Span::from_indices(self.source, start, end)
+    fn span_to(&self, end: CharIndices<'s>) -> source::Span<'s> {
+        source::Span::from_indices(self.source, self.chars.clone(), end)
     }
 
-    fn lex_bf(&mut self) -> Option<Token<'s>> {
+    fn lex_bf(&self) -> Option<Token<'s>> {
         let mut chars = self.chars.clone();
         let (_, c) = chars.next()?;
         let op = bf::Op::new(c)?;
@@ -24,13 +22,33 @@ impl<'s> Tokens<'s> {
         Some(Token::Bf { span: span, op: op })
     }
 
-    fn lex_ident(&mut self) -> Option<Token<'s>> {
+    fn lex_single_char_token(&self) -> Option<Token<'s>> {
+        let mut chars = self.chars.clone();
+        let (_, c) = chars.next()?;
+        let span = self.span_to(chars);
+        match c {
+            ';' => Some(Token::Linebreak {
+                span,
+                newline: false,
+            }),
+            '\n' => Some(Token::Linebreak {
+                span,
+                newline: true,
+            }),
+            '{' => Some(Token::OpenBrace(span)),
+            '}' => Some(Token::CloseBrace(span)),
+            ':' => Some(Token::Colon(span)),
+            _ => None,
+        }
+    }
+
+    fn lex_ident(&self) -> Option<Token<'s>> {
         let mut chars = self.chars.clone();
         let mut prev = chars.clone();
         let mut ident = None;
         while let Some((_, c)) = chars.next() {
             match c {
-                '0'...'9' | 'a'...'z' | 'A'...'Z' => {
+                '0'...'9' | 'a'...'z' | 'A'...'Z' | '_' => {
                     ident = {
                         let mut ident = ident.unwrap_or_else(|| String::new());
                         ident.push(c);
@@ -56,8 +74,21 @@ impl<'s> Iterator for Tokens<'s> {
 
     fn next(&mut self) -> Option<Token<'s>> {
         loop {
-            match None.or_else(|| self.lex_bf()).or_else(|| self.lex_ident()) {
-                t @ Some(_) => return t,
+            match None
+                .or_else(|| self.lex_bf())
+                .or_else(|| self.lex_single_char_token())
+                .or_else(|| self.lex_ident())
+            {
+                Some(t) => {
+                    while match self.chars.clone().next() {
+                        Some((i, _)) => i,
+                        None => self.source.contents.len(),
+                    } < t.span().end()
+                    {
+                        self.chars.next();
+                    }
+                    return Some(t);
+                }
                 None => self.chars.next()?,
             };
         }
@@ -180,6 +211,114 @@ mod tests {
                     span: source::Span::from_components(&source, 10, 10),
                     value: "iD3NT1fi3r".to_string(),
                 },
+            ],
+        );
+    }
+
+    #[test]
+    fn lex_semicolon() {
+        let source = source::File::new(";".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![Token::Linebreak {
+                span: source::Span::from_components(&source, 0, 1),
+                newline: false,
+            }],
+        );
+    }
+
+    #[test]
+    fn lex_newline() {
+        let source = source::File::new("\n".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![Token::Linebreak {
+                span: source::Span::from_components(&source, 0, 1),
+                newline: true,
+            }],
+        );
+    }
+
+    #[test]
+    fn lex_open_brace() {
+        let source = source::File::new("{".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![Token::OpenBrace(source::Span::from_components(
+                &source, 0, 1,
+            ))],
+        );
+    }
+
+    #[test]
+    fn lex_close_brace() {
+        let source = source::File::new("}".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![Token::CloseBrace(source::Span::from_components(
+                &source, 0, 1,
+            ))],
+        );
+    }
+
+    #[test]
+    fn lex_colon() {
+        let source = source::File::new(":".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![Token::Colon(source::Span::from_components(&source, 0, 1))],
+        );
+    }
+
+    #[test]
+    fn lex_all_0() {
+        let source = source::File::new("_abc: {{\n    [-]\n}^Xy1;}".to_string());
+        let tokens = token::Seq::lex(&source);
+        assert_eq!(
+            tokens.tokens,
+            vec![
+                Token::Ident {
+                    span: source::Span::from_components(&source, 0, 4),
+                    value: "_abc".to_string(),
+                },
+                Token::Colon(source::Span::from_components(&source, 4, 1)),
+                Token::OpenBrace(source::Span::from_components(&source, 6, 1)),
+                Token::OpenBrace(source::Span::from_components(&source, 7, 1)),
+                Token::Linebreak {
+                    span: source::Span::from_components(&source, 8, 1),
+                    newline: true,
+                },
+                Token::Bf {
+                    span: source::Span::from_components(&source, 13, 1),
+                    op: bf::Op::Open,
+                },
+                Token::Bf {
+                    span: source::Span::from_components(&source, 14, 1),
+                    op: bf::Op::Minus,
+                },
+                Token::Bf {
+                    span: source::Span::from_components(&source, 15, 1),
+                    op: bf::Op::Close,
+                },
+                Token::Linebreak {
+                    span: source::Span::from_components(&source, 16, 1),
+                    newline: true,
+                },
+                Token::CloseBrace(source::Span::from_components(&source, 17, 1)),
+                Token::Ident {
+                    span: source::Span::from_components(&source, 19, 3),
+                    value: "Xy1".to_string(),
+                },
+                Token::Linebreak {
+                    span: source::Span::from_components(&source, 22, 1),
+                    newline: false,
+                },
+                Token::CloseBrace(source::Span::from_components(&source, 23, 1)),
             ],
         );
     }

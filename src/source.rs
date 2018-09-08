@@ -78,6 +78,10 @@ impl<'s> Span<'s> {
         let len = (end_exclusive - start) as u32;
         Span { src, start, len }
     }
+
+    pub fn end(&self) -> usize {
+        return self.start + self.len as usize;
+    }
 }
 
 impl<'s> fmt::Display for Span<'s> {

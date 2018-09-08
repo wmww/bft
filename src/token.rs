@@ -59,7 +59,7 @@ impl<'s> fmt::Display for Token<'s> {
 
 impl<'s> fmt::Debug for Token<'s> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(self, f)
+        write!(f, "{} ({}..{})", self, self.span().start, self.span().end())
     }
 }
 
