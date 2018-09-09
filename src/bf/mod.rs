@@ -1,4 +1,5 @@
 mod code;
+pub mod naive;
 mod ops;
 mod parser;
 

@@ -17,12 +17,14 @@ fn main() {
         println!();
         let tokens = source::lex(&source);
         println!("tokens: {:?}", tokens);
-        let _code = match bf::parse(&tokens) {
+        let code = match bf::parse(&tokens) {
             Ok(c) => c,
             Err(issue) => {
                 issue.show();
                 ::std::process::exit(1);
             }
         };
+        let mut runtime = bf::naive::Runtime::<u8>::new();
+        runtime.add_code(&code);
     }
 }
