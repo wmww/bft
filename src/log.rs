@@ -3,7 +3,7 @@ use colored::*;
 use source;
 use std::fmt;
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Severity {
     Debug,
     //InternalWarning,
@@ -65,6 +65,7 @@ impl<'s> fmt::Display for SpanDisplay {
     }
 }
 
+#[derive(PartialEq)]
 pub struct Issue<'s> {
     pub severity: Severity,
     pub span: Option<source::Span<'s>>,
@@ -80,6 +81,21 @@ impl<'s> Issue<'s> {
             ),
             None => message(self.severity, &self.message),
         }
+    }
+}
+
+impl<'s> fmt::Debug for Issue<'s> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:?}: {}{}",
+            self.severity,
+            self.message,
+            match &self.span {
+                Some(span) => format!(" at {:?}", span),
+                None => "".to_string(),
+            }
+        )
     }
 }
 

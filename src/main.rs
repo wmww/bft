@@ -20,7 +20,9 @@ fn main() {
         let code = match bf::parse(&tokens) {
             Ok(c) => c,
             Err(issue) => {
-                issue.show();
+                for i in issue.1 {
+                    i.show();
+                }
                 ::std::process::exit(1);
             }
         };
