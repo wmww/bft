@@ -1,3 +1,4 @@
+use source;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -21,6 +22,10 @@ impl Op {
             ',' => Some(Op::Input),
             _ => None,
         }
+    }
+
+    pub fn token<'s>(self, span: source::Span<'s>) -> source::Token<'s> {
+        source::Token::Bf { span, op: self }
     }
 }
 

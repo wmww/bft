@@ -68,44 +68,29 @@ pub fn parse<'s>(tokens: &'s Vec<Token<'s>>) -> Result<Vec<Code<'s>>, log::Issue
 #[cfg(test)]
 mod tests {
     use super::*;
-    use source::Span;
 
     #[test]
     fn simple_bf() {
-        let source = source::File::new(String::new());
+        let file = source::File::new(String::new());
+        let mut s = source::span::Generator::new(&file);
         let tokens = vec![
-            Token::Bf {
-                op: Op::Plus,
-                span: Span::from_components(&source, 0, 1),
-            },
-            Token::Bf {
-                op: Op::Minus,
-                span: Span::from_components(&source, 1, 1),
-            },
-            Token::Bf {
-                op: Op::Input,
-                span: Span::from_components(&source, 2, 1),
-            },
-            Token::Bf {
-                op: Op::Output,
-                span: Span::from_components(&source, 3, 1),
-            },
-            Token::Bf {
-                op: Op::Left,
-                span: Span::from_components(&source, 4, 1),
-            },
-            Token::Bf {
-                op: Op::Right,
-                span: Span::from_components(&source, 5, 1),
-            },
+            Op::Plus.token(s.span(1)),
+            Op::Minus.token(s.span(1)),
+            Op::Minus.token(s.span(1)),
+            Op::Input.token(s.span(1)),
+            Op::Output.token(s.span(1)),
+            Op::Left.token(s.span(1)),
+            Op::Right.token(s.span(1)),
         ];
+        s.reset();
         let code = vec![Code::Ops(vec![
-            (Op::Plus, Span::from_components(&source, 0, 1)),
-            (Op::Minus, Span::from_components(&source, 1, 1)),
-            (Op::Input, Span::from_components(&source, 2, 1)),
-            (Op::Output, Span::from_components(&source, 3, 1)),
-            (Op::Left, Span::from_components(&source, 4, 1)),
-            (Op::Right, Span::from_components(&source, 5, 1)),
+            (Op::Plus, s.span(1)),
+            (Op::Minus, s.span(1)),
+            (Op::Minus, s.span(1)),
+            (Op::Input, s.span(1)),
+            (Op::Output, s.span(1)),
+            (Op::Left, s.span(1)),
+            (Op::Right, s.span(1)),
         ])];
         let gen_code = match parse(&tokens) {
             Ok(c) => c,
@@ -116,46 +101,31 @@ mod tests {
 
     #[test]
     fn simple_loop() {
-        let source = source::File::new(String::new());
+        let file = source::File::new(String::new());
+        let mut s = source::span::Generator::new(&file);
         let tokens = vec![
-            Token::Bf {
-                    op: Op::Right,
-                    span: Span::from_components(&source, 0, 1),
-                },
-            Token::Bf {
-                    op: Op::Plus,
-                    span: Span::from_components(&source, 1, 1),
-                },
-            Token::OpenLoop(Span::from_components(&source, 2, 1)),
-            Token::Bf {
-                op: Op::Plus,
-                span: Span::from_components(&source, 3, 1),
-            },
-            Token::Bf {
-                op: Op::Left,
-                span: Span::from_components(&source, 4, 1),
-            },
-            Token::Bf {
-                op: Op::Output,
-                span: Span::from_components(&source, 5, 1),
-            },
-            Token::CloseLoop(Span::from_components(&source, 6, 1)),
-            Token::Bf {
-                    op: Op::Minus,
-                    span: Span::from_components(&source, 7, 1),
-                },
+            Op::Right.token(s.span(1)),
+            Op::Plus.token(s.span(1)),
+            Token::OpenLoop(s.span(1)),
+            Op::Plus.token(s.span(1)),
+            Op::Left.token(s.span(1)),
+            Op::Output.token(s.span(1)),
+            Token::CloseLoop(s.span(1)),
+            Op::Minus.token(s.span(1)),
         ];
-        let code = vec![Code::Ops(vec![
-            (Op::Right, Span::from_components(&source, 0, 1)),
-            (Op::Plus, Span::from_components(&source, 1, 1)),
-        ]), Code::Loop(vec![Code::Ops(vec![
-            (Op::Plus, Span::from_components(&source, 3, 1)),
-            (Op::Left, Span::from_components(&source, 4, 1)),
-            (Op::Output, Span::from_components(&source, 5, 1)),
-            ])], Span::from_components(&source, 2, 5)),
-        Code::Ops(vec![
-            (Op::Minus, Span::from_components(&source, 7, 1)),
-        ])];
+        s.reset();
+        let code = vec![
+            Code::Ops(vec![(Op::Right, s.span(1)), (Op::Plus, s.span(1))]),
+            Code::Loop(
+                vec![Code::Ops(vec![
+                    (Op::Plus, s.skip(1).span(1)),
+                    (Op::Left, s.span(1)),
+                    (Op::Output, s.span(1)),
+                ])],
+                s.skip(-4).span(5),
+            ),
+            Code::Ops(vec![(Op::Minus, s.span(1))]),
+        ];
         let gen_code = match parse(&tokens) {
             Ok(c) => c,
             Err(e) => panic!("error parsing: {}", e.message),

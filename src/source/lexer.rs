@@ -115,204 +115,161 @@ pub fn lex<'s>(file: &'s source::File) -> Vec<Token<'s>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use source::span;
+
+    fn ident<'s>(value: &str, span: span::Span<'s>) -> Token<'s> {
+        Token::Ident {
+            span,
+            value: value.to_string(),
+        }
+    }
 
     #[test]
-    fn lex_bf_complex_0() {
+    fn bf_complex_0() {
         let source = source::File::new(",[>>+<<-].".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
         assert_eq!(
             tokens,
             vec![
-                Token::Bf {
-                    span: source::Span::from_components(&source, 0, 1),
-                    op: bf::Op::Input,
-                },
-                Token::OpenLoop(source::Span::from_components(&source, 1, 1)),
-                Token::Bf {
-                    span: source::Span::from_components(&source, 2, 1),
-                    op: bf::Op::Right,
-                },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 3, 1),
-                    op: bf::Op::Right,
-                },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 4, 1),
-                    op: bf::Op::Plus,
-                },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 5, 1),
-                    op: bf::Op::Left,
-                },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 6, 1),
-                    op: bf::Op::Left,
-                },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 7, 1),
-                    op: bf::Op::Minus,
-                },
-                Token::CloseLoop(source::Span::from_components(&source, 8, 1)),
-                Token::Bf {
-                    span: source::Span::from_components(&source, 9, 1),
-                    op: bf::Op::Output,
-                },
+                bf::Op::Input.token(s.span(1)),
+                Token::OpenLoop(s.span(1)),
+                bf::Op::Right.token(s.span(1)),
+                bf::Op::Right.token(s.span(1)),
+                bf::Op::Plus.token(s.span(1)),
+                bf::Op::Left.token(s.span(1)),
+                bf::Op::Left.token(s.span(1)),
+                bf::Op::Minus.token(s.span(1)),
+                Token::CloseLoop(s.span(1)),
+                bf::Op::Output.token(s.span(1)),
             ],
         );
     }
 
     #[test]
-    fn lex_single_char_ident() {
+    fn single_char_ident() {
         let source = source::File::new("k".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
-        assert_eq!(
-            tokens,
-            vec![Token::Ident {
-                span: source::Span::from_components(&source, 0, 1),
-                value: "k".to_string(),
-            }],
-        );
+        assert_eq!(tokens, vec![ident("k", s.span(1))],);
     }
 
     #[test]
-    fn lex_single_ident() {
+    fn single_ident() {
         let source = source::File::new("1xY".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
         assert_eq!(
             tokens,
             vec![Token::Ident {
-                span: source::Span::from_components(&source, 0, 3),
+                span: s.span(3),
                 value: "1xY".to_string(),
             }],
         );
     }
 
     #[test]
-    fn lex_idents_0() {
-        let source = source::File::new("Test of 1 iD3NT1fi3r".to_string());
+    fn idents_0() {
+        let source = source::File::new("Test of 4  iD3nT1fi3rZ".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
         assert_eq!(
             tokens,
             vec![
-                Token::Ident {
-                    span: source::Span::from_components(&source, 0, 4),
-                    value: "Test".to_string(),
-                },
-                Token::Ident {
-                    span: source::Span::from_components(&source, 5, 2),
-                    value: "of".to_string(),
-                },
-                Token::Ident {
-                    span: source::Span::from_components(&source, 8, 1),
-                    value: "1".to_string(),
-                },
-                Token::Ident {
-                    span: source::Span::from_components(&source, 10, 10),
-                    value: "iD3NT1fi3r".to_string(),
-                },
+                ident("Test", s.span(4)),
+                ident("of", s.skip(1).span(2)),
+                ident("4", s.skip(1).span(1)),
+                ident("iD3nT1fi3rZ", s.skip(2).span(11)),
             ],
         );
     }
 
     #[test]
-    fn lex_semicolon() {
+    fn semicolon() {
         let source = source::File::new(";".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
         assert_eq!(
             tokens,
             vec![Token::Linebreak {
-                span: source::Span::from_components(&source, 0, 1),
+                span: s.span(1),
                 newline: false,
             }],
         );
     }
 
     #[test]
-    fn lex_newline() {
+    fn newline() {
         let source = source::File::new("\n".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
         assert_eq!(
             tokens,
             vec![Token::Linebreak {
-                span: source::Span::from_components(&source, 0, 1),
+                span: s.span(1),
                 newline: true,
             }],
         );
     }
 
     #[test]
-    fn lex_open_brace() {
+    fn open_brace() {
         let source = source::File::new("{".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
-        assert_eq!(
-            tokens,
-            vec![Token::OpenBrace(source::Span::from_components(
-                &source, 0, 1,
-            ))],
-        );
+        assert_eq!(tokens, vec![Token::OpenBrace(s.span(1))],);
     }
 
     #[test]
-    fn lex_close_brace() {
+    fn close_brace() {
         let source = source::File::new("}".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
-        assert_eq!(
-            tokens,
-            vec![Token::CloseBrace(source::Span::from_components(
-                &source, 0, 1,
-            ))],
-        );
+        assert_eq!(tokens, vec![Token::CloseBrace(s.span(1))],);
     }
 
     #[test]
-    fn lex_colon() {
+    fn colon() {
         let source = source::File::new(":".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
-        assert_eq!(
-            tokens,
-            vec![Token::Colon(source::Span::from_components(&source, 0, 1))],
-        );
+        assert_eq!(tokens, vec![Token::Colon(s.span(1))],);
     }
 
     #[test]
-    fn lex_all_0() {
+    fn all_0() {
         let source = source::File::new("_abc: {{\n    [-]\n}^Xy1;}".to_string());
+        let mut s = span::Generator::new(&source);
         let tokens = lex(&source);
         assert_eq!(
             tokens,
             vec![
-                Token::Ident {
-                    span: source::Span::from_components(&source, 0, 4),
-                    value: "_abc".to_string(),
-                },
-                Token::Colon(source::Span::from_components(&source, 4, 1)),
-                Token::OpenBrace(source::Span::from_components(&source, 6, 1)),
-                Token::OpenBrace(source::Span::from_components(&source, 7, 1)),
+                ident("_abc", s.span(4)),
+                Token::Colon(s.span(1)),
+                Token::OpenBrace(s.skip(1).span(1)),
+                Token::OpenBrace(s.span(1)),
                 Token::Linebreak {
-                    span: source::Span::from_components(&source, 8, 1),
+                    span: s.span(1),
                     newline: true,
                 },
-                Token::OpenLoop(source::Span::from_components(&source, 13, 1)),
-                Token::Bf {
-                    span: source::Span::from_components(&source, 14, 1),
-                    op: bf::Op::Minus,
-                },
-                Token::CloseLoop(source::Span::from_components(&source, 15, 1)),
+                Token::OpenLoop(s.skip(4).span(1)),
+                bf::Op::Minus.token(s.span(1)),
+                Token::CloseLoop(s.span(1)),
                 Token::Linebreak {
-                    span: source::Span::from_components(&source, 16, 1),
+                    span: s.span(1),
                     newline: true,
                 },
-                Token::CloseBrace(source::Span::from_components(&source, 17, 1)),
+                Token::CloseBrace(s.span(1)),
                 Token::Ident {
-                    span: source::Span::from_components(&source, 19, 3),
+                    span: s.skip(1).span(3),
                     value: "Xy1".to_string(),
                 },
                 Token::Linebreak {
-                    span: source::Span::from_components(&source, 22, 1),
+                    span: s.span(1),
                     newline: false,
                 },
-                Token::CloseBrace(source::Span::from_components(&source, 23, 1)),
-            ],
+                Token::CloseBrace(s.span(1)),
+            ]
         );
     }
 }

@@ -5,7 +5,7 @@ use std::str::CharIndices;
 use log;
 use source::File;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Span<'s> {
     pub src: &'s File,
     pub start: usize,
@@ -62,5 +62,42 @@ impl<'s> Span<'s> {
 impl<'s> fmt::Display for Span<'s> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.src.unwrap_path())
+    }
+}
+
+impl<'s> fmt::Debug for Span<'s> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}..{}", self.start, self.end())
+    }
+}
+
+pub struct Generator<'s> {
+    src: &'s File,
+    current: usize,
+}
+
+impl<'s> Generator<'s> {
+    pub fn new(src: &'s File) -> Generator {
+        Generator { src, current: 0 }
+    }
+
+    pub fn skip(&mut self, bytes: i32) -> &mut Generator<'s> {
+        self.current = (self.current as i32 + bytes) as usize;
+        self
+    }
+
+    pub fn jump_to(&mut self, byte: usize) -> &mut Generator<'s> {
+        self.current = byte;
+        self
+    }
+
+    pub fn reset(&mut self) -> &mut Generator<'s> {
+        self.jump_to(0)
+    }
+
+    pub fn span(&mut self, bytes: usize) -> Span<'s> {
+        let start = self.current;
+        self.skip(bytes as i32);
+        Span::from_components(self.src, start, (self.current - start) as u32)
     }
 }
