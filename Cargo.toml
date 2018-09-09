@@ -6,3 +6,4 @@ description = "Tools for linting, formatting and running Brainfuck code"
 
 [dependencies]
 clap = "2.32"
+colored = "1.6"

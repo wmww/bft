@@ -1,11 +1,15 @@
-// use source;
+use colored::*;
 
+use source;
+use std::fmt;
+
+#[derive(PartialEq, Clone, Copy)]
 pub enum Severity {
     Debug,
     //InternalWarning,
     InternalError,
     //Warning,
-    //Error,
+    Error,
 }
 
 pub fn message(severity: Severity, msg: &str) {
@@ -16,25 +20,68 @@ pub fn message(severity: Severity, msg: &str) {
             //Severity::InternalWarning => "Internal warning",
             Severity::InternalError => "Internal error",
             //Severity::Warning => "Warning",
-            //Severity::Error => "Error",
+            Severity::Error => "Error",
         },
         msg
     );
 }
 
-/*
-pub struct Issue {
-    severity: Severity,
-    span: Option<source::Span>,
-    message: String,
+struct SpanDisplay {
+    filepath: String,
+    line: u32,
+    col: u32,
+    len: u32,
+    line_str: String,
+    byte_start: usize,
+    byte_end: usize,
 }
 
-impl Issue {
-    fn show(&self) {
-        message(self.severity, format!("{}:\n    {}", self.span,  self.message));
+impl SpanDisplay {
+    fn new(span: &source::Span) -> SpanDisplay {
+        let line_str = span.src.contents[span.start..span.end()].to_string();
+        let byte_end = line_str.len();
+        let len = line_str.chars().count() as u32;
+        SpanDisplay {
+            filepath: span.src.unwrap_path(),
+            line: 0,
+            col: 0,
+            len,
+            line_str,
+            byte_start: 0,
+            byte_end,
+        }
     }
 }
-*/
+
+impl<'s> fmt::Display for SpanDisplay {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let location_info = format!("{}:{}:{} ", self.filepath, self.line, self.col);
+        let indicator = " ".repeat(location_info.chars().count() + self.col as usize)
+            + &"^".repeat(self.len as usize);
+        let range = self.byte_start..self.byte_end;
+        let mut line_str = self.line_str.clone();
+        line_str.replace_range(range.clone(), &self.line_str[range].bright_red().bold());
+        write!(f, "{}{}\n{}", location_info, line_str, indicator)
+    }
+}
+
+pub struct Issue<'s> {
+    pub severity: Severity,
+    pub span: Option<source::Span<'s>>,
+    pub message: String,
+}
+
+impl<'s> Issue<'s> {
+    pub fn show(&self) {
+        match &self.span {
+            Some(s) => message(
+                self.severity,
+                &format!("{}:\n    {}", SpanDisplay::new(&s), self.message),
+            ),
+            None => message(self.severity, &self.message),
+        }
+    }
+}
 
 #[macro_export]
 macro_rules! bft_error {

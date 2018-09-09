@@ -1,7 +1,9 @@
 mod file;
 mod lexer;
+mod span;
 mod token;
 
 pub use self::file::File;
-pub use self::file::Span;
 pub use self::lexer::lex;
+pub use self::span::Span;
+pub use self::token::Token;

@@ -23,6 +23,8 @@ pub enum Token<'src> {
         span: source::Span<'src>,
         op: bf::Op,
     },
+    OpenLoop(source::Span<'src>),
+    CloseLoop(source::Span<'src>),
 }
 
 impl<'src> Token<'src> {
@@ -33,6 +35,8 @@ impl<'src> Token<'src> {
             Token::String { span, value: _ } => span,
             Token::OpenBrace(span) => span,
             Token::CloseBrace(span) => span,
+            Token::OpenLoop(span) => span,
+            Token::CloseLoop(span) => span,
             Token::Colon(span) => span,
             Token::Bf { span, op: _ } => span,
         }
@@ -51,6 +55,8 @@ impl<'s> fmt::Display for Token<'s> {
             }
             Token::OpenBrace(_) => write!(f, "{{"),
             Token::CloseBrace(_) => write!(f, "}}"),
+            Token::OpenLoop(_) => write!(f, "'['"),
+            Token::CloseLoop(_) => write!(f, "']'"),
             Token::Colon(_) => write!(f, ":"),
             Token::Bf { span: _, op } => write!(f, "{}", op),
         }
@@ -60,26 +66,5 @@ impl<'s> fmt::Display for Token<'s> {
 impl<'s> fmt::Debug for Token<'s> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} ({}..{})", self, self.span().start, self.span().end())
-    }
-}
-
-#[derive(Debug)]
-pub struct Seq<'src> {
-    pub tokens: Vec<Token<'src>>,
-    pub file: &'src source::File,
-}
-
-impl<'s> fmt::Display for Seq<'s> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.tokens.iter().fold(String::new(), |s, i| format!(
-                "{}{}{}",
-                s,
-                if s.is_empty() { "" } else { " " },
-                i
-            ))
-        )
     }
 }

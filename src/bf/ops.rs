@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Op {
     Plus,
     Minus,
@@ -8,8 +8,6 @@ pub enum Op {
     Right,
     Output,
     Input,
-    Open,
-    Close,
 }
 
 impl Op {
@@ -21,8 +19,6 @@ impl Op {
             '>' => Some(Op::Right),
             '.' => Some(Op::Output),
             ',' => Some(Op::Input),
-            '[' => Some(Op::Open),
-            ']' => Some(Op::Close),
             _ => None,
         }
     }
@@ -37,8 +33,6 @@ impl fmt::Display for Op {
             Op::Right => write!(f, ">"),
             Op::Output => write!(f, "."),
             Op::Input => write!(f, ","),
-            Op::Open => write!(f, "["),
-            Op::Close => write!(f, "]"),
         }
     }
 }

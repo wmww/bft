@@ -4,7 +4,6 @@ use options;
 use std;
 use std::fmt;
 use std::io::Read;
-use std::str::CharIndices;
 
 #[derive(Debug, PartialEq)]
 pub struct File {
@@ -46,46 +45,5 @@ impl File {
 impl fmt::Display for File {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}:\n{}", self.unwrap_path(), self.contents)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Span<'s> {
-    pub src: &'s File,
-    pub start: usize,
-    pub len: u32,
-}
-
-impl<'s> Span<'s> {
-    pub fn from_components(src: &'s File, start: usize, len: u32) -> Span<'s> {
-        Span { src, start, len }
-    }
-
-    pub fn from_indices(
-        src: &'s File,
-        mut first: CharIndices<'s>,
-        mut after_last: CharIndices<'s>,
-    ) -> Span<'s> {
-        let start = match first.next() {
-            Some((i, _)) => i,
-            None => src.contents.len(),
-        };
-        let end_exclusive = match after_last.next() {
-            Some((i, _)) => i,
-            None => src.contents.len(),
-        };
-        assert!(start <= end_exclusive);
-        let len = (end_exclusive - start) as u32;
-        Span { src, start, len }
-    }
-
-    pub fn end(&self) -> usize {
-        return self.start + self.len as usize;
-    }
-}
-
-impl<'s> fmt::Display for Span<'s> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.src.unwrap_path())
     }
 }

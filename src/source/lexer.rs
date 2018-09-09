@@ -1,6 +1,5 @@
 use bf;
 use source;
-use source::token;
 use source::token::Token;
 use std::str::CharIndices;
 
@@ -37,6 +36,8 @@ impl<'s> Tokens<'s> {
             }),
             '{' => Some(Token::OpenBrace(span)),
             '}' => Some(Token::CloseBrace(span)),
+            '[' => Some(Token::OpenLoop(span)),
+            ']' => Some(Token::CloseLoop(span)),
             ':' => Some(Token::Colon(span)),
             _ => None,
         }
@@ -107,11 +108,8 @@ impl<'src> IntoIterator for &'src source::File {
     }
 }
 
-pub fn lex(file: &source::File) -> token::Seq {
-    token::Seq {
-        tokens: file.into_iter().collect(),
-        file: file,
-    }
+pub fn lex<'s>(file: &'s source::File) -> Vec<Token<'s>> {
+    file.into_iter().collect()
 }
 
 #[cfg(test)]
@@ -123,16 +121,13 @@ mod tests {
         let source = source::File::new(",[>>+<<-].".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![
                 Token::Bf {
                     span: source::Span::from_components(&source, 0, 1),
                     op: bf::Op::Input,
                 },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 1, 1),
-                    op: bf::Op::Open,
-                },
+                Token::OpenLoop(source::Span::from_components(&source, 1, 1)),
                 Token::Bf {
                     span: source::Span::from_components(&source, 2, 1),
                     op: bf::Op::Right,
@@ -157,10 +152,7 @@ mod tests {
                     span: source::Span::from_components(&source, 7, 1),
                     op: bf::Op::Minus,
                 },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 8, 1),
-                    op: bf::Op::Close,
-                },
+                Token::CloseLoop(source::Span::from_components(&source, 8, 1)),
                 Token::Bf {
                     span: source::Span::from_components(&source, 9, 1),
                     op: bf::Op::Output,
@@ -174,7 +166,7 @@ mod tests {
         let source = source::File::new("k".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![Token::Ident {
                 span: source::Span::from_components(&source, 0, 1),
                 value: "k".to_string(),
@@ -187,7 +179,7 @@ mod tests {
         let source = source::File::new("1xY".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![Token::Ident {
                 span: source::Span::from_components(&source, 0, 3),
                 value: "1xY".to_string(),
@@ -200,7 +192,7 @@ mod tests {
         let source = source::File::new("Test of 1 iD3NT1fi3r".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![
                 Token::Ident {
                     span: source::Span::from_components(&source, 0, 4),
@@ -227,7 +219,7 @@ mod tests {
         let source = source::File::new(";".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![Token::Linebreak {
                 span: source::Span::from_components(&source, 0, 1),
                 newline: false,
@@ -240,7 +232,7 @@ mod tests {
         let source = source::File::new("\n".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![Token::Linebreak {
                 span: source::Span::from_components(&source, 0, 1),
                 newline: true,
@@ -253,7 +245,7 @@ mod tests {
         let source = source::File::new("{".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![Token::OpenBrace(source::Span::from_components(
                 &source, 0, 1,
             ))],
@@ -265,7 +257,7 @@ mod tests {
         let source = source::File::new("}".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![Token::CloseBrace(source::Span::from_components(
                 &source, 0, 1,
             ))],
@@ -277,7 +269,7 @@ mod tests {
         let source = source::File::new(":".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![Token::Colon(source::Span::from_components(&source, 0, 1))],
         );
     }
@@ -287,7 +279,7 @@ mod tests {
         let source = source::File::new("_abc: {{\n    [-]\n}^Xy1;}".to_string());
         let tokens = lex(&source);
         assert_eq!(
-            tokens.tokens,
+            tokens,
             vec![
                 Token::Ident {
                     span: source::Span::from_components(&source, 0, 4),
@@ -300,18 +292,12 @@ mod tests {
                     span: source::Span::from_components(&source, 8, 1),
                     newline: true,
                 },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 13, 1),
-                    op: bf::Op::Open,
-                },
+                Token::OpenLoop(source::Span::from_components(&source, 13, 1)),
                 Token::Bf {
                     span: source::Span::from_components(&source, 14, 1),
                     op: bf::Op::Minus,
                 },
-                Token::Bf {
-                    span: source::Span::from_components(&source, 15, 1),
-                    op: bf::Op::Close,
-                },
+                Token::CloseLoop(source::Span::from_components(&source, 15, 1)),
                 Token::Linebreak {
                     span: source::Span::from_components(&source, 16, 1),
                     newline: true,
