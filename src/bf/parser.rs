@@ -41,11 +41,11 @@ fn parse_section<'s>(tokens: &'s Vec<Token<'s>>, start: usize, end: usize) -> Pa
                     if !ops.is_empty() {
                         code.push(Code::Ops(ops));
                         ops = Vec::new();
-                        let contents = parse_section(tokens, i + 1, j)?;
-                        let span = source::Span::between(tokens[i].span(), tokens[j].span());
-                        code.push(Code::Loop(contents, span));
-                        i = j;
                     }
+                    let contents = parse_section(tokens, i + 1, j)?;
+                    let span = source::Span::between(tokens[i].span(), tokens[j].span());
+                    code.push(Code::Loop(contents, span));
+                    i = j;
                 } else {
                     issues.push(open_span.issue(log::Severity::Error, "Loop not terminated"));
                 }
@@ -247,7 +247,10 @@ mod tests {
             Code::Loop(vec![], s.span(2)),
             Code::Loop(
                 vec![Code::Loop(
-                    vec![Code::Loop(vec![], s.span(2)), Code::Loop(vec![], s.span(2))],
+                    vec![
+                        Code::Loop(vec![], s.skip(2).span(2)),
+                        Code::Loop(vec![], s.span(2)),
+                    ],
                     s.skip(-5).span(6),
                 )],
                 s.skip(-7).span(8),
