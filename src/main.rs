@@ -1,5 +1,3 @@
-extern crate colored;
-
 #[macro_use]
 mod log;
 mod bf;

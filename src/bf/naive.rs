@@ -1,4 +1,6 @@
-extern crate num;
+extern crate num_traits;
+
+use self::num_traits::Num;
 
 use bf::code::Code;
 
@@ -9,7 +11,7 @@ pub struct Runtime<'s, D> {
     input_buffer: Vec<char>,
 }
 
-impl<'s, D: num::Num + PartialOrd + Copy> Runtime<'s, D> {
+impl<'s, D: Num + PartialOrd + Copy> Runtime<'s, D> {
     pub fn new() -> Runtime<'s, D> {
         Runtime {
             code: Vec::new(),

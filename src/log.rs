@@ -1,4 +1,6 @@
-use colored::*;
+extern crate colored;
+
+use self::colored::*;
 
 use source;
 use std::fmt;
