@@ -24,8 +24,8 @@ impl Op {
         }
     }
 
-    pub fn token<'s>(self, span: source::Span<'s>) -> source::Token<'s> {
-        source::Token::Bf { span, op: self }
+    pub fn code<'s>(self, span: source::Span<'s>) -> ::bf::Code<'s> {
+        ::bf::Code::Op(self, span)
     }
 }
 

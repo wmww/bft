@@ -68,3 +68,9 @@ impl<'s> fmt::Debug for Token<'s> {
         write!(f, "{} ({}..{})", self, self.span().start, self.span().end())
     }
 }
+
+impl bf::Op {
+    pub fn token<'s>(self, span: source::Span<'s>) -> source::Token<'s> {
+        source::Token::Bf { span, op: self }
+    }
+}

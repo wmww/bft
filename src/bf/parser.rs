@@ -9,12 +9,11 @@ type ParseResult<'s> = Result<Vec<Code<'s>>, (Vec<Code<'s>>, Vec<log::Issue<'s>>
 fn parse_section<'s>(tokens: &'s Vec<Token<'s>>, start: usize, end: usize) -> ParseResult<'s> {
     let mut code = Vec::new();
     let mut issues = Vec::new();
-    let mut ops: Vec<(Op, source::Span<'s>)> = Vec::new();
     let mut i = start;
     while i < end {
         match &tokens[i] {
             Token::Bf { op, span } => {
-                ops.push((op.clone(), span.clone()));
+                code.push(Code::Op(op.clone(), span.clone()));
             }
             Token::CloseLoop(span) => {
                 issues.push(span.issue(log::Severity::Error, "Extraneous closing bracket"));
@@ -38,10 +37,6 @@ fn parse_section<'s>(tokens: &'s Vec<Token<'s>>, start: usize, end: usize) -> Pa
                     j += 1;
                 }
                 if level <= 0 {
-                    if !ops.is_empty() {
-                        code.push(Code::Ops(ops));
-                        ops = Vec::new();
-                    }
                     let contents = parse_section(tokens, i + 1, j)?;
                     let span = source::Span::between(tokens[i].span(), tokens[j].span());
                     code.push(Code::Loop(contents, span));
@@ -53,9 +48,6 @@ fn parse_section<'s>(tokens: &'s Vec<Token<'s>>, start: usize, end: usize) -> Pa
             _ => (),
         }
         i += 1;
-    }
-    if !ops.is_empty() {
-        code.push(Code::Ops(ops));
     }
     if issues.is_empty() {
         Ok(code)
@@ -141,15 +133,15 @@ mod tests {
             Op::Right.token(s.span(1)),
         ];
         s.reset();
-        let code = vec![Code::Ops(vec![
-            (Op::Plus, s.span(1)),
-            (Op::Minus, s.span(1)),
-            (Op::Minus, s.span(1)),
-            (Op::Input, s.span(1)),
-            (Op::Output, s.span(1)),
-            (Op::Left, s.span(1)),
-            (Op::Right, s.span(1)),
-        ])];
+        let code = vec![
+            Op::Plus.code(s.span(1)),
+            Op::Minus.code(s.span(1)),
+            Op::Minus.code(s.span(1)),
+            Op::Input.code(s.span(1)),
+            Op::Output.code(s.span(1)),
+            Op::Left.code(s.span(1)),
+            Op::Right.code(s.span(1)),
+        ];
         test_parse(&tokens, Ok(code));
     }
 
@@ -169,16 +161,17 @@ mod tests {
         ];
         s.reset();
         let code = vec![
-            Code::Ops(vec![(Op::Right, s.span(1)), (Op::Plus, s.span(1))]),
+            Op::Right.code(s.span(1)),
+            Op::Plus.code(s.span(1)),
             Code::Loop(
-                vec![Code::Ops(vec![
-                    (Op::Plus, s.skip(1).span(1)),
-                    (Op::Left, s.span(1)),
-                    (Op::Output, s.span(1)),
-                ])],
+                vec![
+                    Op::Plus.code(s.skip(1).span(1)),
+                    Op::Left.code(s.span(1)),
+                    Op::Output.code(s.span(1)),
+                ],
                 s.skip(-4).span(5),
             ),
-            Code::Ops(vec![(Op::Minus, s.span(1))]),
+            Op::Minus.code(s.span(1)),
         ];
         test_parse(&tokens, Ok(code));
     }
@@ -205,21 +198,20 @@ mod tests {
         ];
         s.reset();
         let code = vec![
-            Code::Ops(vec![(Op::Right, s.span(1)), (Op::Plus, s.span(1))]),
+            Op::Right.code(s.span(1)),
+            Op::Plus.code(s.span(1)),
             Code::Loop(
                 vec![
-                    Code::Ops(vec![(Op::Left, s.skip(1).span(1)), (Op::Left, s.span(1))]),
-                    Code::Loop(
-                        vec![Code::Ops(vec![(Op::Plus, s.skip(1).span(1))])],
-                        s.skip(-2).span(3),
-                    ),
-                    Code::Ops(vec![(Op::Left, s.span(1))]),
+                    Op::Left.code(s.skip(1).span(1)),
+                    Op::Left.code(s.span(1)),
+                    Code::Loop(vec![Op::Plus.code(s.skip(1).span(1))], s.skip(-2).span(3)),
+                    Op::Left.code(s.span(1)),
                 ],
                 s.skip(-7).span(8),
             ),
-            Code::Ops(vec![(Op::Output, s.span(1))]),
+            Op::Output.code(s.span(1)),
             Code::Loop(vec![], s.span(2)),
-            Code::Ops(vec![(Op::Minus, s.span(1))]),
+            Op::Minus.code(s.span(1)),
         ];
         test_parse(&tokens, Ok(code));
     }
