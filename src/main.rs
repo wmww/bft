@@ -11,20 +11,13 @@ fn main() {
             Ok(s) => s,
             Err(e) => bft_error!(options, "{}", e),
         };
-        println!("source: {}", source);
-        println!();
         let tokens = source::lex(&source);
-        println!("tokens: {:?}", tokens);
         let code = match bf::parse(&tokens) {
             Ok(c) => c,
-            Err(issue) => {
-                for i in issue.1 {
-                    i.show();
-                }
-                ::std::process::exit(1);
-            }
+            Err(e) => bft_error!(options, "{:?}", e.1),
         };
         let mut runtime = bf::naive::Runtime::<u8>::new();
         runtime.add_code(&code);
+        runtime.run(None, &| c | print!("{}", c));
     }
 }

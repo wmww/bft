@@ -1,5 +1,4 @@
 use bf::code::Code;
-use bf::ops::Op;
 use log;
 use source;
 use source::Token;
