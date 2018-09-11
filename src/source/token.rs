@@ -6,8 +6,8 @@ use std::fmt;
 pub enum Token<'src> {
     Linebreak {
         span: source::Span<'src>,
-        newline: bool,
-    }, // if its a `;`, newline is false
+        newline: bool, // false if the token is ';'
+    },
     Ident {
         span: source::Span<'src>,
         value: String,
@@ -23,8 +23,6 @@ pub enum Token<'src> {
         span: source::Span<'src>,
         op: bf::Op,
     },
-    OpenLoop(source::Span<'src>),
-    CloseLoop(source::Span<'src>),
 }
 
 impl<'src> Token<'src> {
@@ -35,8 +33,6 @@ impl<'src> Token<'src> {
             Token::String { span, value: _ } => span,
             Token::OpenBrace(span) => span,
             Token::CloseBrace(span) => span,
-            Token::OpenLoop(span) => span,
-            Token::CloseLoop(span) => span,
             Token::Colon(span) => span,
             Token::Bf { span, op: _ } => span,
         }
@@ -55,8 +51,6 @@ impl<'s> fmt::Display for Token<'s> {
             }
             Token::OpenBrace(_) => write!(f, "{{"),
             Token::CloseBrace(_) => write!(f, "}}"),
-            Token::OpenLoop(_) => write!(f, "'['"),
-            Token::CloseLoop(_) => write!(f, "']'"),
             Token::Colon(_) => write!(f, ":"),
             Token::Bf { span: _, op } => write!(f, "{}", op),
         }

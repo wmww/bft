@@ -1,4 +1,3 @@
-use source;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -9,6 +8,8 @@ pub enum Op {
     Right,
     Output,
     Input,
+    Start,
+    End,
 }
 
 impl Op {
@@ -20,24 +21,28 @@ impl Op {
             '>' => Some(Op::Right),
             '.' => Some(Op::Output),
             ',' => Some(Op::Input),
+            '[' => Some(Op::Start),
+            ']' => Some(Op::End),
             _ => None,
         }
     }
 
-    pub fn code<'s>(self, span: source::Span<'s>) -> ::bf::Code<'s> {
-        ::bf::Code::Op(self, span)
+    pub fn get_char(&self) -> char {
+        match self {
+            Op::Plus => '+',
+            Op::Minus => '-',
+            Op::Left => '<',
+            Op::Right => '>',
+            Op::Output => '.',
+            Op::Input => ',',
+            Op::Start => '[',
+            Op::End => ']',
+        }
     }
 }
 
 impl fmt::Display for Op {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Op::Plus => write!(f, "+"),
-            Op::Minus => write!(f, "-"),
-            Op::Left => write!(f, "<"),
-            Op::Right => write!(f, ">"),
-            Op::Output => write!(f, "."),
-            Op::Input => write!(f, ","),
-        }
+        write!(f, "{}", self.get_char())
     }
 }

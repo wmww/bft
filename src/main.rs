@@ -12,12 +12,8 @@ fn main() {
             Err(e) => bft_error!(options, "{}", e),
         };
         let tokens = source::lex(&source);
-        let code = match bf::parse(&tokens) {
-            Ok(c) => c,
-            Err(e) => bft_error!(options, "{:?}", e.1),
-        };
-        let mut runtime = bf::naive::Runtime::<u8>::new();
-        runtime.add_code(&code);
-        runtime.run(None, &| c | print!("{}", c));
+        let mut runtime = bf::debug::Runtime::<u8>::new();
+        runtime.add_tokens(&tokens);
+        runtime.run(None, &|c| print!("{}", c));
     }
 }

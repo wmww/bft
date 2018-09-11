@@ -1,8 +1,4 @@
-mod code;
-pub mod naive;
-mod ops;
-mod parser;
+pub mod debug;
+mod op;
 
-pub use self::code::Code;
-pub use self::ops::Op;
-pub use self::parser::parse;
+pub use self::op::Op;

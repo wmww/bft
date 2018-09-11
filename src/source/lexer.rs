@@ -1,4 +1,4 @@
-use bf;
+use bf::Op;
 use source;
 use source::token::Token;
 use std::str::CharIndices;
@@ -16,7 +16,7 @@ impl<'s> Tokens<'s> {
     fn lex_bf(&self) -> Option<Token<'s>> {
         let mut chars = self.chars.clone();
         let (_, c) = chars.next()?;
-        let op = bf::Op::new(c)?;
+        let op = Op::new(c)?;
         let span = self.span_to(chars);
         Some(Token::Bf { span: span, op: op })
     }
@@ -36,8 +36,6 @@ impl<'s> Tokens<'s> {
             }),
             '{' => Some(Token::OpenBrace(span)),
             '}' => Some(Token::CloseBrace(span)),
-            '[' => Some(Token::OpenLoop(span)),
-            ']' => Some(Token::CloseLoop(span)),
             ':' => Some(Token::Colon(span)),
             _ => None,
         }
@@ -132,16 +130,16 @@ mod tests {
         assert_eq!(
             tokens,
             vec![
-                bf::Op::Input.token(s.span(1)),
-                Token::OpenLoop(s.span(1)),
-                bf::Op::Right.token(s.span(1)),
-                bf::Op::Right.token(s.span(1)),
-                bf::Op::Plus.token(s.span(1)),
-                bf::Op::Left.token(s.span(1)),
-                bf::Op::Left.token(s.span(1)),
-                bf::Op::Minus.token(s.span(1)),
-                Token::CloseLoop(s.span(1)),
-                bf::Op::Output.token(s.span(1)),
+                Op::Input.token(s.span(1)),
+                Op::Start.token(s.span(1)),
+                Op::Right.token(s.span(1)),
+                Op::Right.token(s.span(1)),
+                Op::Plus.token(s.span(1)),
+                Op::Left.token(s.span(1)),
+                Op::Left.token(s.span(1)),
+                Op::Minus.token(s.span(1)),
+                Op::End.token(s.span(1)),
+                Op::Output.token(s.span(1)),
             ],
         );
     }
@@ -252,9 +250,9 @@ mod tests {
                     span: s.span(1),
                     newline: true,
                 },
-                Token::OpenLoop(s.skip(4).span(1)),
-                bf::Op::Minus.token(s.span(1)),
-                Token::CloseLoop(s.span(1)),
+                Op::Start.token(s.skip(4).span(1)),
+                Op::Minus.token(s.span(1)),
+                Op::End.token(s.span(1)),
                 Token::Linebreak {
                     span: s.span(1),
                     newline: true,
