@@ -19,7 +19,7 @@ pub struct Runtime<'s, D> {
     input_buffer: Vec<char>,
 }
 
-impl<'s, D: 'static + Num + NumOps + ToPrimitive + FromPrimitive + PartialOrd + Clone + Copy>
+impl<'s, D: 'static + Num + NumOps + WrappingAdd + WrappingSub + ToPrimitive + FromPrimitive + PartialOrd + Clone + Copy>
     Runtime<'s, D>
 {
     pub fn new() -> Runtime<'s, D> {
@@ -83,12 +83,12 @@ impl<'s, D: 'static + Num + NumOps + ToPrimitive + FromPrimitive + PartialOrd + 
             match op {
                 Op::Plus => {
                     let ptr = self.ptr;
-                    let value = self.get_cell(ptr) + D::one();
+                    let value = self.get_cell(ptr).wrapping_add(&D::one());
                     self.set_cell(ptr, value);
                 }
                 Op::Minus => {
                     let ptr = self.ptr;
-                    let value = self.get_cell(ptr) - D::one();
+                    let value = self.get_cell(ptr).wrapping_sub(&D::one());
                     self.set_cell(ptr, value);
                 }
                 Op::Left => {
