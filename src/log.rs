@@ -12,6 +12,7 @@ pub enum Severity {
     InternalError,
     //Warning,
     Error,
+    RuntimeError,
 }
 
 pub fn message(severity: Severity, msg: &str) {
@@ -23,6 +24,7 @@ pub fn message(severity: Severity, msg: &str) {
             Severity::InternalError => "Internal error",
             //Severity::Warning => "Warning",
             Severity::Error => "Error",
+            Severity::RuntimeError => "Runtime error",
         },
         msg
     );
@@ -75,6 +77,14 @@ pub struct Issue<'s> {
 }
 
 impl<'s> Issue<'s> {
+    pub fn new(severity: Severity, message: &str) -> Issue<'s> {
+        Issue {
+            severity,
+            span: None,
+            message: message.to_string(),
+        }
+    }
+
     pub fn show(&self) {
         match &self.span {
             Some(s) => message(
