@@ -19,8 +19,34 @@ pub struct Runtime<'s, D> {
     input_buffer: Vec<char>,
 }
 
-impl<'s, D: 'static + Num + NumOps + WrappingAdd + WrappingSub + ToPrimitive + FromPrimitive + PartialOrd + Clone + Copy>
-    Runtime<'s, D>
+enum InstrResult<'s> {
+    None,
+    Output(char),
+    Abort(Abort<'s>),
+}
+
+impl<'s> InstrResult<'s> {
+    fn abort(message: &str) -> InstrResult<'s> {
+        InstrResult::Abort(Abort::Error(Issue::new(
+                        Severity::RuntimeError,
+                        message,
+                    )))
+    }
+}
+
+impl<
+        's,
+        D: 'static
+            + Num
+            + NumOps
+            + WrappingAdd
+            + WrappingSub
+            + ToPrimitive
+            + FromPrimitive
+            + PartialOrd
+            + Clone
+            + Copy,
+    > Runtime<'s, D>
 {
     pub fn new() -> Runtime<'s, D> {
         Runtime {
@@ -69,6 +95,70 @@ impl<'s, D: 'static + Num + NumOps + WrappingAdd + WrappingSub + ToPrimitive + F
         }
     }
 
+    fn run_instr(&mut self, instr: usize) -> InstrResult<'s> {
+        let ptr = self.ptr;
+        let op = self.code[instr].0;
+        println!("Running {}", op);
+        match op {
+            Op::Plus => {
+                let value = self.get_cell(ptr).wrapping_add(&D::one());
+                self.set_cell(ptr, value);
+                InstrResult::None
+            }
+            Op::Minus => {
+                let value = self.get_cell(ptr).wrapping_sub(&D::one());
+                self.set_cell(ptr, value);
+                InstrResult::None
+            }
+            Op::Left => {
+                if self.ptr == 0 {
+                    InstrResult::abort("Pointer moved left of the starting point")
+                } else {
+                    self.ptr -= 1;
+                    InstrResult::None
+                }
+            }
+            Op::Right => {
+                self.ptr += 1;
+                InstrResult::None
+            }
+            Op::Output => {
+                InstrResult::Output(char::from_u32(self.get_cell(self.ptr).to_u32().unwrap()).unwrap_or('\0'))
+            }
+            Op::Input => match self.input_buffer.pop() {
+                Some(c) => {
+                    let value = D::from_u8(c as u8).unwrap();
+                    self.set_cell(ptr, value);
+                    InstrResult::None
+                }
+                None => InstrResult::Abort(Abort::AwaitingInput),
+            },
+            Op::Start => {
+                if self.get_cell(self.ptr) == D::zero() {
+
+                } else {
+                    self.stack.push(instr);
+                }
+                InstrResult::None
+            }
+            Op::End => {
+                if self.stack.len() <= 1 {
+                    InstrResult::abort("Extraneous closing brace")
+                } else {
+                    if self.get_cell(self.ptr) == D::zero() {
+                        self.stack.pop().unwrap();
+                        let last_index = self.stack.len() - 1;
+                        self.stack[last_index] = instr;
+                    } else {
+                        let last_index = self.stack.len() - 1;
+                        self.stack[last_index] = self.stack[last_index];
+                    }
+                    InstrResult::None
+                }
+            }
+        }
+    }
+
     pub fn run<F>(&mut self, mut instr_cap: Option<usize>, handle_output: &F) -> Abort<'s>
     where
         F: Fn(char),
@@ -78,64 +168,10 @@ impl<'s, D: 'static + Num + NumOps + WrappingAdd + WrappingSub + ToPrimitive + F
             if instr > self.code.len() {
                 break Abort::Completed;
             }
-            let (op, _span) = self.code[instr].clone();
-            println!("Running {}", op);
-            match op {
-                Op::Plus => {
-                    let ptr = self.ptr;
-                    let value = self.get_cell(ptr).wrapping_add(&D::one());
-                    self.set_cell(ptr, value);
-                }
-                Op::Minus => {
-                    let ptr = self.ptr;
-                    let value = self.get_cell(ptr).wrapping_sub(&D::one());
-                    self.set_cell(ptr, value);
-                }
-                Op::Left => {
-                    if self.ptr == 0 {
-                        break Abort::Error(Issue::new(
-                            Severity::RuntimeError,
-                            "Pointer moved left of the starting point",
-                        ));
-                        // break Abort::Error(span.issue(Severity::RuntimeError, "Pointer moved left of the start"))
-                    }
-                    self.ptr -= 1;
-                }
-                Op::Right => self.ptr += 1,
-                Op::Output => handle_output(
-                    char::from_u32(self.get_cell(self.ptr).to_u32().unwrap()).unwrap_or('\0'),
-                ),
-                Op::Input => {
-                    let ptr = self.ptr;
-                    let value = match self.input_buffer.pop() {
-                        Some(c) => D::from_u8(c as u8).unwrap(),
-                        None => break Abort::AwaitingInput,
-                    };
-                    self.set_cell(ptr, value);
-                }
-                Op::Start => {
-                    if self.get_cell(self.ptr) == D::zero() {
-
-                    } else {
-                        self.stack.push(instr);
-                    }
-                }
-                Op::End => {
-                    if self.stack.len() <= 1 {
-                        break Abort::Error(Issue::new(
-                            Severity::RuntimeError,
-                            "Extraneous closing brace",
-                        ));
-                    // break Abort::Error(span.issue(Severity::RuntimeError, "Extraneous closing brace"));
-                    } else if self.get_cell(self.ptr) == D::zero() {
-                        self.stack.pop().unwrap();
-                        let last_index = self.stack.len() - 1;
-                        self.stack[last_index] = instr;
-                    } else {
-                        let last_index = self.stack.len() - 1;
-                        self.stack[last_index] = self.stack[last_index];
-                    }
-                }
+            match self.run_instr(instr) {
+                InstrResult::None => (),
+                InstrResult::Output(c) => handle_output(c),
+                InstrResult::Abort(a) => break a,
             }
             let last_index = self.stack.len() - 1;
             self.stack[last_index] += 1;
