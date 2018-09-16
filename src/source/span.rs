@@ -2,7 +2,7 @@ use std::cmp;
 use std::fmt;
 use std::str::CharIndices;
 
-use log;
+use io;
 use source::File;
 
 #[derive(Clone, PartialEq)]
@@ -50,8 +50,8 @@ impl<'s> Span<'s> {
         }
     }
 
-    pub fn issue(&self, severity: log::Severity, message: &str) -> log::Issue {
-        log::Issue {
+    pub fn issue(&self, severity: io::Severity, message: &str) -> io::Issue {
+        io::Issue {
             span: Some(self.clone()),
             severity,
             message: message.to_string(),

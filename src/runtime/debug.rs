@@ -4,10 +4,9 @@ use std::char;
 
 use self::num_traits::*;
 
-use bf::op::Op;
-use bf::Abort;
-use log::Issue;
-use log::Severity;
+use super::*;
+use io;
+use io::Issue;
 use source::Span;
 use source::Token;
 
@@ -27,7 +26,7 @@ enum InstrResult<'s> {
 
 impl<'s> InstrResult<'s> {
     fn abort(message: &str) -> InstrResult<'s> {
-        InstrResult::Abort(Abort::Error(Issue::new(Severity::RuntimeError, message)))
+        InstrResult::Abort(Abort::Error(Issue::new(io::RuntimeError, message)))
     }
 }
 

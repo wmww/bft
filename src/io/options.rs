@@ -3,6 +3,8 @@ use std;
 extern crate clap;
 use self::clap::{App, Arg};
 
+use super::*;
+
 #[derive(Debug)]
 pub struct Options {
     pub filepath: Option<String>, // code to run
@@ -20,7 +22,7 @@ impl Options {
     }
 
     pub fn with_cmd_line(self) -> Options {
-        let mut app = App::new(env!("CARGO_PKG_NAME"))
+        let app = App::new(env!("CARGO_PKG_NAME"))
             .version(env!("CARGO_PKG_VERSION"))
             .author(env!("CARGO_PKG_AUTHORS"))
             .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -59,5 +61,15 @@ impl Options {
             println!();
         }
         return options;
+    }
+
+    pub fn show_issue(&self, issue: &Issue) {
+        eprintln!("{:?}", issue);
+    }
+
+    pub fn debug(&self, msg: &str) {
+        if self.debug {
+            message(Debug, msg);
+        }
     }
 }

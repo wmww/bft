@@ -1,34 +1,10 @@
 extern crate colored;
 
 use self::colored::*;
-
-use source;
 use std::fmt;
 
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub enum Severity {
-    Debug,
-    //InternalWarning,
-    InternalError,
-    //Warning,
-    Error,
-    RuntimeError,
-}
-
-pub fn message(severity: Severity, msg: &str) {
-    println!(
-        "{}: {}",
-        match severity {
-            Severity::Debug => "Debug",
-            //Severity::InternalWarning => "Internal warning",
-            Severity::InternalError => "Internal error",
-            //Severity::Warning => "Warning",
-            Severity::Error => "Error",
-            Severity::RuntimeError => "Runtime error",
-        },
-        msg
-    );
-}
+use super::*;
+use source;
 
 struct SpanDisplay {
     filepath: String,
@@ -109,21 +85,4 @@ impl<'s> fmt::Debug for Issue<'s> {
             }
         )
     }
-}
-
-#[macro_export]
-macro_rules! bft_error {
-    ($ops:ident, $($arg:tt)*) => ({
-        log::message(log::Severity::InternalError, &format!($($arg)*));
-        std::process::exit(1);
-    })
-}
-
-#[macro_export]
-macro_rules! bft_log {
-    ($ops:ident, $($arg:tt)*) => ({
-        if $ops.debug {
-            log::message(log::Severity::Debug, &format!($($arg)*));
-        }
-    })
 }

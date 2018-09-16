@@ -1,4 +1,4 @@
-use bf;
+use runtime;
 use source;
 use std::fmt;
 
@@ -21,7 +21,7 @@ pub enum Token<'src> {
     Colon(source::Span<'src>),
     Bf {
         span: source::Span<'src>,
-        op: bf::Op,
+        op: runtime::Op,
     },
 }
 
@@ -63,7 +63,7 @@ impl<'s> fmt::Debug for Token<'s> {
     }
 }
 
-impl bf::Op {
+impl runtime::Op {
     pub fn token<'s>(self, span: source::Span<'s>) -> source::Token<'s> {
         source::Token::Bf { span, op: self }
     }

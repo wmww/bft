@@ -1,4 +1,4 @@
-use bf::Op;
+use runtime::Op;
 use source;
 use source::token::Token;
 use std::str::CharIndices;
