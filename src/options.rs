@@ -54,8 +54,9 @@ impl Options {
             options.fixup_file = false;
         }
         if options.filepath == None {
-            app.write_long_help(&mut std::io::stdout())
+            app.write_help(&mut std::io::stdout())
                 .expect("failed to write to stdout");
+            println!();
         }
         return options;
     }
