@@ -135,11 +135,28 @@ impl<
             },
             Op::Start => {
                 if self.get_cell(self.ptr) == D::zero() {
-
+                    let mut instr = instr + 1;
+                    let mut level = 1;
+                    loop {
+                        if instr >= self.code.len() {
+                            break InstrResult::Abort(Abort::Completed)
+                        }
+                        match self.code[instr].0 {
+                            Op::Start => level += 1,
+                            Op::End => level -= 1,
+                            _ => (),
+                        }
+                        if level <= 0 {
+                            let last_index = self.stack.len() - 1;
+                            self.stack[last_index] = instr;
+                            break InstrResult::None;
+                        }
+                        instr += 1;
+                    }
                 } else {
                     self.stack.push(instr);
+                    InstrResult::None
                 }
-                InstrResult::None
             }
             Op::End => {
                 if self.stack.len() <= 1 {
