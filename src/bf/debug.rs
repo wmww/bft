@@ -27,10 +27,7 @@ enum InstrResult<'s> {
 
 impl<'s> InstrResult<'s> {
     fn abort(message: &str) -> InstrResult<'s> {
-        InstrResult::Abort(Abort::Error(Issue::new(
-                        Severity::RuntimeError,
-                        message,
-                    )))
+        InstrResult::Abort(Abort::Error(Issue::new(Severity::RuntimeError, message)))
     }
 }
 
@@ -62,6 +59,10 @@ impl<
         self.ptr
     }
 
+    pub fn set_ptr(&mut self, ptr: usize) {
+        self.ptr = ptr;
+    }
+
     pub fn get_cell(&self, i: usize) -> D {
         if i < self.data.len() {
             self.data[i]
@@ -70,7 +71,7 @@ impl<
         }
     }
 
-    fn set_cell(&mut self, index: usize, value: D) {
+    pub fn set_cell(&mut self, index: usize, value: D) {
         if index >= self.data.len() {
             self.data.resize(index + 1, D::zero());
         }
@@ -122,9 +123,9 @@ impl<
                 self.ptr += 1;
                 InstrResult::None
             }
-            Op::Output => {
-                InstrResult::Output(char::from_u32(self.get_cell(self.ptr).to_u32().unwrap()).unwrap_or('\0'))
-            }
+            Op::Output => InstrResult::Output(
+                char::from_u32(self.get_cell(self.ptr).to_u32().unwrap()).unwrap_or('\0'),
+            ),
             Op::Input => match self.input_buffer.pop() {
                 Some(c) => {
                     let value = D::from_u8(c as u8).unwrap();
@@ -139,7 +140,7 @@ impl<
                     let mut level = 1;
                     loop {
                         if instr >= self.code.len() {
-                            break InstrResult::Abort(Abort::Completed)
+                            break InstrResult::Abort(Abort::Completed);
                         }
                         match self.code[instr].0 {
                             Op::Start => level += 1,
@@ -176,9 +177,9 @@ impl<
         }
     }
 
-    pub fn run<F>(&mut self, mut instr_cap: Option<usize>, handle_output: &F) -> Abort<'s>
+    pub fn run<F>(&mut self, mut instr_cap: Option<usize>, handle_output: &mut F) -> Abort<'s>
     where
-        F: Fn(char),
+        F: FnMut(char),
     {
         loop {
             let instr = *self.stack.last().unwrap();

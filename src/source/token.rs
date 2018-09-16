@@ -2,7 +2,7 @@ use bf;
 use source;
 use std::fmt;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum Token<'src> {
     Linebreak {
         span: source::Span<'src>,

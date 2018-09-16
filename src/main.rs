@@ -14,6 +14,6 @@ fn main() {
         let tokens = source::lex(&source);
         let mut runtime = bf::debug::Runtime::<u8>::new();
         runtime.add_tokens(&tokens);
-        runtime.run(None, &|c| print!("{}", c));
+        runtime.run(None, &mut |c| print!("Output: {} (ASC: {})\n", c, c as i32));
     }
 }
