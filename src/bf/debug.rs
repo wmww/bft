@@ -99,7 +99,6 @@ impl<
     fn run_instr(&mut self, instr: usize) -> InstrResult<'s> {
         let ptr = self.ptr;
         let op = self.code[instr].0;
-        println!("Running {}", op);
         match op {
             Op::Plus => {
                 let value = self.get_cell(ptr).wrapping_add(&D::one());
@@ -169,7 +168,7 @@ impl<
                         self.stack[last_index] = instr;
                     } else {
                         let last_index = self.stack.len() - 1;
-                        self.stack[last_index] = self.stack[last_index];
+                        self.stack[last_index] = self.stack[last_index - 1];
                     }
                     InstrResult::None
                 }
@@ -193,6 +192,12 @@ impl<
             }
             let last_index = self.stack.len() - 1;
             self.stack[last_index] += 1;
+            if let Some(instr_cap) = &mut instr_cap {
+                *instr_cap -= 1;
+                if *instr_cap <= 0 {
+                    break Abort::InstrCapped;
+                }
+            }
         }
     }
 }

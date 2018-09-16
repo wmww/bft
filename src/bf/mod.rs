@@ -8,7 +8,7 @@ use log;
 #[derive(PartialEq, Debug)]
 pub enum Abort<'s> {
     Completed,
-    ExceededLimit,
+    InstrCapped,
     AwaitingInput,
     Error(log::Issue<'s>),
 }
