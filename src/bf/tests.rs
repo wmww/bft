@@ -37,7 +37,7 @@ impl TestCase {
         runtime.add_tokens(&tokens);
         let mut result_output = String::new();
         assert_eq!(
-            runtime.run(None, &mut |c| result_output.push(c)),
+            runtime.run(Some(10000), &mut |c| result_output.push(c)),
             Abort::Completed
         );
         assert_eq!(self.expected_output, result_output);
@@ -141,6 +141,30 @@ fn move_and_chage() {
     test.code = "+>>+++>+<-";
     test.expected_data = vec![1, 0, 2, 1];
     test.expected_ptr = 2;
+
+    test.run();
+}
+
+#[test]
+fn loop_down() {
+    let mut test = TestCase::new();
+
+    test.code = "[-]";
+    test.initial_data = vec![27];
+    test.expected_data = vec![0];
+    test.expected_ptr = 0;
+
+    test.run();
+}
+
+#[test]
+fn add() {
+    let mut test = TestCase::new();
+
+    test.code = "[>+<-]";
+    test.initial_data = vec![21, 54];
+    test.expected_data = vec![0, 75];
+    test.expected_ptr = 0;
 
     test.run();
 }
