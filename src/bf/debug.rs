@@ -183,7 +183,7 @@ impl<
     {
         loop {
             let instr = *self.stack.last().unwrap();
-            if instr > self.code.len() {
+            if instr >= self.code.len() {
                 break Abort::Completed;
             }
             match self.run_instr(instr) {
