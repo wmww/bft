@@ -93,3 +93,68 @@ fn op_minus() {
 
     test.run();
 }
+
+#[test]
+fn op_right() {
+    let mut test = TestCase::new();
+
+    test.code = vec![Op::Right];
+    test.expected_ptr = 1;
+
+    test.run();
+}
+
+#[test]
+fn op_left() {
+    let mut test = TestCase::new();
+
+    test.code = vec![Op::Left];
+    test.initial_ptr = 1;
+    test.expected_ptr = 0;
+
+    test.run();
+}
+
+#[test]
+fn op_output() {
+    let mut test = TestCase::new();
+
+    test.code = vec![Op::Output];
+    test.initial_data = vec![97];
+    test.expected_output = "a";
+
+    test.run();
+}
+
+#[test]
+fn op_input() {
+    let mut test = TestCase::new();
+
+    test.code = vec![Op::Input];
+    test.input = "a";
+    test.expected_data = vec![97];
+
+    test.run();
+}
+
+#[test]
+fn move_and_chage() {
+    let mut test = TestCase::new();
+
+    test.code = vec![
+        Op::Plus,
+        Op::Right,
+        Op::Right,
+        Op::Plus,
+        Op::Plus,
+        Op::Plus,
+        Op::Right,
+        Op::Plus,
+        Op::Left,
+        Op::Minus,
+    ];
+    test.expected_data = vec![1, 0, 2, 1];
+    test.expected_ptr = 2;
+
+    test.run();
+}
