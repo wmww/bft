@@ -4,11 +4,11 @@ mod op;
 pub use self::op::Op;
 
 #[derive(PartialEq, Debug)]
-pub enum Abort<'s> {
+pub enum Abort {
     Completed,
     InstrCapped,
     AwaitingInput,
-    Error(::io::Issue<'s>),
+    Error(::io::Issue),
 }
 
 #[cfg(test)]

@@ -1,27 +1,28 @@
 use std::cmp;
 use std::fmt;
+use std::rc::Rc;
 use std::str::CharIndices;
 
 use io;
 use source::File;
 
 #[derive(Clone, PartialEq)]
-pub struct Span<'s> {
-    pub src: &'s File,
+pub struct Span {
+    pub src: Rc<File>,
     pub start: usize,
     pub len: u32,
 }
 
-impl<'s> Span<'s> {
-    pub fn from_components(src: &'s File, start: usize, len: u32) -> Span<'s> {
+impl Span {
+    pub fn from_components(src: Rc<File>, start: usize, len: u32) -> Span {
         Span { src, start, len }
     }
 
     pub fn from_indices(
-        src: &'s File,
-        mut first: CharIndices<'s>,
-        mut after_last: CharIndices<'s>,
-    ) -> Span<'s> {
+        src: Rc<File>,
+        mut first: CharIndices,
+        mut after_last: CharIndices,
+    ) -> Span {
         let start = match first.next() {
             Some((i, _)) => i,
             None => src.contents.len(),
@@ -39,12 +40,12 @@ impl<'s> Span<'s> {
         return self.start + self.len as usize;
     }
 
-    pub fn between(a: &'s Span, b: &'s Span) -> Span<'s> {
+    pub fn between(a: &Span, b: &Span) -> Span {
         assert_eq!(a.src, b.src);
         let start = cmp::min(a.start, b.start);
         let len = (cmp::max(a.start + a.len as usize, b.start + b.len as usize) - start) as u32;
         Span {
-            src: a.src,
+            src: a.src.clone(),
             start,
             len,
         }
@@ -59,45 +60,45 @@ impl<'s> Span<'s> {
     }
 }
 
-impl<'s> fmt::Display for Span<'s> {
+impl fmt::Display for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.src.unwrap_path())
     }
 }
 
-impl<'s> fmt::Debug for Span<'s> {
+impl fmt::Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}..{}", self.start, self.end())
     }
 }
 
-pub struct Generator<'s> {
-    src: &'s File,
+pub struct Generator {
+    src: Rc<File>,
     current: usize,
 }
 
-impl<'s> Generator<'s> {
-    pub fn new(src: &'s File) -> Generator {
+impl Generator {
+    pub fn new(src: Rc<File>) -> Generator {
         Generator { src, current: 0 }
     }
 
-    pub fn skip(&mut self, bytes: i32) -> &mut Generator<'s> {
+    pub fn skip(&mut self, bytes: i32) -> &mut Generator {
         self.current = (self.current as i32 + bytes) as usize;
         self
     }
 
-    pub fn jump_to(&mut self, byte: usize) -> &mut Generator<'s> {
+    pub fn jump_to(&mut self, byte: usize) -> &mut Generator {
         self.current = byte;
         self
     }
 
-    pub fn reset(&mut self) -> &mut Generator<'s> {
+    pub fn reset(&mut self) -> &mut Generator {
         self.jump_to(0)
     }
 
-    pub fn span(&mut self, bytes: usize) -> Span<'s> {
+    pub fn span(&mut self, bytes: usize) -> Span {
         let start = self.current;
         self.skip(bytes as i32);
-        Span::from_components(self.src, start, (self.current - start) as u32)
+        Span::from_components(self.src.clone(), start, (self.current - start) as u32)
     }
 }

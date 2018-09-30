@@ -24,15 +24,15 @@ impl TestCase {
     }
 
     fn run(self) {
-        let source = ::source::File::new(self.code.to_string());
+        let source = ::std::rc::Rc::new(::source::File::from_string(self.code.to_string()));
         let mut runtime = debug::Runtime::<u8>::new();
         for i in 0..self.initial_data.len() {
             runtime.set_cell(i, self.initial_data[i]);
         }
         runtime.set_ptr(self.initial_ptr);
         runtime.queue_input_str(self.input);
-        let mut s = ::source::span::Generator::new(&source);
-        let mut tokens = ::source::lex(&source);
+        let mut s = ::source::span::Generator::new(source.clone());
+        let mut tokens = ::source::lex(source);
         // let tokens = code.iter().map(|op| op.token(s.span(0))).collect();
         runtime.add_tokens(&tokens);
         let mut result_output = String::new();
@@ -53,7 +53,7 @@ impl TestCase {
 
 #[test]
 fn construct_runtime() {
-    let mut test = TestCase::new();
+    let test = TestCase::new();
 
     test.run();
 }

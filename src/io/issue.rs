@@ -33,7 +33,7 @@ impl SpanDisplay {
     }
 }
 
-impl<'s> fmt::Display for SpanDisplay {
+impl fmt::Display for SpanDisplay {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let location_info = format!("{}:{}:{} ", self.filepath, self.line, self.col);
         let indicator = " ".repeat(location_info.chars().count() + self.col as usize)
@@ -46,14 +46,14 @@ impl<'s> fmt::Display for SpanDisplay {
 }
 
 #[derive(PartialEq)]
-pub struct Issue<'s> {
+pub struct Issue {
     pub severity: Severity,
-    pub span: Option<source::Span<'s>>,
+    pub span: Option<source::Span>,
     pub message: String,
 }
 
-impl<'s> Issue<'s> {
-    pub fn new(severity: Severity, message: &str) -> Issue<'s> {
+impl Issue {
+    pub fn new(severity: Severity, message: &str) -> Issue {
         Issue {
             severity,
             span: None,
@@ -72,7 +72,7 @@ impl<'s> Issue<'s> {
     }
 }
 
-impl<'s> fmt::Debug for Issue<'s> {
+impl fmt::Debug for Issue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,

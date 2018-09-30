@@ -10,28 +10,27 @@ use io::Issue;
 use source::Span;
 use source::Token;
 
-pub struct Runtime<'s, D> {
-    code: Vec<(Op, Span<'s>)>,
+pub struct Runtime<D> {
+    code: Vec<(Op, Span)>,
     stack: Vec<usize>,
     data: Vec<D>,
     ptr: usize,
     input_buffer: Vec<char>,
 }
 
-enum InstrResult<'s> {
+enum InstrResult {
     None,
     Output(char),
-    Abort(Abort<'s>),
+    Abort(Abort),
 }
 
-impl<'s> InstrResult<'s> {
-    fn abort(message: &str) -> InstrResult<'s> {
+impl InstrResult {
+    fn abort(message: &str) -> InstrResult {
         InstrResult::Abort(Abort::Error(Issue::new(io::RuntimeError, message)))
     }
 }
 
 impl<
-        's,
         D: 'static
             + Num
             + NumOps
@@ -42,9 +41,9 @@ impl<
             + PartialOrd
             + Clone
             + Copy,
-    > Runtime<'s, D>
+    > Runtime<D>
 {
-    pub fn new() -> Runtime<'s, D> {
+    pub fn new() -> Runtime<D> {
         Runtime {
             code: Vec::new(),
             stack: vec![0],
@@ -77,11 +76,11 @@ impl<
         self.data[index] = value;
     }
 
-    pub fn add_tokens(&mut self, tokens: &Vec<Token<'s>>) {
+    pub fn add_tokens(&mut self, tokens: &Vec<Token>) {
         let prev_end = self.code.len();
         self.code
             .extend(tokens.iter().filter_map(|token| match token {
-                Token::Bf { op, span } => Some((op.clone(), span.clone())),
+                Token::Bf(op, span) => Some((op.clone(), span.clone())),
                 _ => None,
             }));
         if self.stack.is_empty() && prev_end < self.code.len() {
@@ -95,7 +94,7 @@ impl<
         }
     }
 
-    fn run_instr(&mut self, instr: usize) -> InstrResult<'s> {
+    fn run_instr(&mut self, instr: usize) -> InstrResult {
         let ptr = self.ptr;
         let op = self.code[instr].0;
         match op {
@@ -175,7 +174,7 @@ impl<
         }
     }
 
-    pub fn run<F>(&mut self, mut instr_cap: Option<usize>, handle_output: &mut F) -> Abort<'s>
+    pub fn run<F>(&mut self, mut instr_cap: Option<usize>, handle_output: &mut F) -> Abort
     where
         F: FnMut(char),
     {

@@ -28,7 +28,7 @@ impl File {
         })
     }
 
-    pub fn new(contents: String) -> File {
+    pub fn from_string(contents: String) -> File {
         File {
             path: None,
             contents: contents,

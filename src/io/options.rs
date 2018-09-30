@@ -30,14 +30,12 @@ impl Options {
                 Arg::with_name("FILEPATH")
                     .help("The input brainfuck source code")
                     .index(1),
-            )
-            .arg(
+            ).arg(
                 Arg::with_name("DEBUG")
                     .short("d")
                     .long("debug")
                     .help("Enable debug mode"),
-            )
-            .arg(
+            ).arg(
                 Arg::with_name("READONLY")
                     .short("r")
                     .long("readonly")

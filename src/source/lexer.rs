@@ -1,27 +1,35 @@
 use runtime::Op;
 use source;
 use source::token::Token;
+use std::rc::Rc;
 use std::str::CharIndices;
 
 pub struct Tokens<'s> {
-    source: &'s source::File,
+    source: &'s Rc<source::File>,
     chars: CharIndices<'s>,
 }
 
 impl<'s> Tokens<'s> {
-    fn span_to(&self, end: CharIndices<'s>) -> source::Span<'s> {
-        source::Span::from_indices(self.source, self.chars.clone(), end)
+    fn new(file: &'s Rc<source::File>) -> Tokens<'s> {
+        Tokens {
+            source: file,
+            chars: file.contents.char_indices(),
+        }
     }
 
-    fn lex_bf(&self) -> Option<Token<'s>> {
+    fn span_to(&self, end: CharIndices<'s>) -> source::Span {
+        source::Span::from_indices(self.source.clone(), self.chars.clone(), end)
+    }
+
+    fn lex_bf(&self) -> Option<Token> {
         let mut chars = self.chars.clone();
         let (_, c) = chars.next()?;
         let op = Op::new(c)?;
         let span = self.span_to(chars);
-        Some(Token::Bf { span: span, op: op })
+        Some(Token::Bf(op, span))
     }
 
-    fn lex_single_char_token(&self) -> Option<Token<'s>> {
+    fn lex_single_char_token(&self) -> Option<Token> {
         let mut chars = self.chars.clone();
         let (_, c) = chars.next()?;
         let span = self.span_to(chars);
@@ -41,7 +49,7 @@ impl<'s> Tokens<'s> {
         }
     }
 
-    fn lex_ident(&self) -> Option<Token<'s>> {
+    fn lex_ident(&self) -> Option<Token> {
         let mut chars = self.chars.clone();
         let mut prev = chars.clone();
         let mut ident = None;
@@ -60,18 +68,15 @@ impl<'s> Tokens<'s> {
         }
         ident.map(|ident| {
             let span = self.span_to(prev);
-            Token::Ident {
-                span: span,
-                value: ident,
-            }
+            Token::Ident(ident, span)
         })
     }
 }
 
 impl<'s> Iterator for Tokens<'s> {
-    type Item = Token<'s>;
+    type Item = Token;
 
-    fn next(&mut self) -> Option<Token<'s>> {
+    fn next(&mut self) -> Option<Token> {
         loop {
             match None
                 .or_else(|| self.lex_bf())
@@ -94,20 +99,8 @@ impl<'s> Iterator for Tokens<'s> {
     }
 }
 
-impl<'src> IntoIterator for &'src source::File {
-    type Item = Token<'src>;
-    type IntoIter = Tokens<'src>;
-
-    fn into_iter(self) -> Tokens<'src> {
-        Tokens {
-            source: self,
-            chars: self.contents.char_indices(),
-        }
-    }
-}
-
-pub fn lex<'s>(file: &'s source::File) -> Vec<Token<'s>> {
-    file.into_iter().collect()
+pub fn lex(file: Rc<source::File>) -> Vec<Token> {
+    Tokens::new(&file).collect()
 }
 
 #[cfg(test)]
@@ -115,18 +108,20 @@ mod tests {
     use super::*;
     use source::span;
 
-    fn ident<'s>(value: &str, span: span::Span<'s>) -> Token<'s> {
-        Token::Ident {
-            span,
-            value: value.to_string(),
-        }
+    fn ident<'s>(value: &str, span: span::Span) -> Token {
+        Token::Ident(value.to_string(), span)
+    }
+
+    fn load(source: &str) -> (span::Generator, Vec<Token>) {
+        let source = Rc::new(source::File::from_string(source.to_string()));
+        let span = span::Generator::new(source.clone());
+        let tokens = lex(source);
+        (span, tokens)
     }
 
     #[test]
     fn bf_complex_0() {
-        let source = source::File::new(",[>>+<<-].".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load(",[>>+<<-].");
         assert_eq!(
             tokens,
             vec![
@@ -146,31 +141,19 @@ mod tests {
 
     #[test]
     fn single_char_ident() {
-        let source = source::File::new("k".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load("k");
         assert_eq!(tokens, vec![ident("k", s.span(1))],);
     }
 
     #[test]
     fn single_ident() {
-        let source = source::File::new("1xY".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
-        assert_eq!(
-            tokens,
-            vec![Token::Ident {
-                span: s.span(3),
-                value: "1xY".to_string(),
-            }],
-        );
+        let (mut s, tokens) = load("1xY");
+        assert_eq!(tokens, vec![ident("1xY", s.span(3))],);
     }
 
     #[test]
     fn idents_0() {
-        let source = source::File::new("Test of 4  iD3nT1fi3rZ".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load("Test of 4  iD3nT1fi3rZ");
         assert_eq!(
             tokens,
             vec![
@@ -184,9 +167,7 @@ mod tests {
 
     #[test]
     fn semicolon() {
-        let source = source::File::new(";".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load(";");
         assert_eq!(
             tokens,
             vec![Token::Linebreak {
@@ -198,9 +179,7 @@ mod tests {
 
     #[test]
     fn newline() {
-        let source = source::File::new("\n".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load("\n");
         assert_eq!(
             tokens,
             vec![Token::Linebreak {
@@ -212,33 +191,25 @@ mod tests {
 
     #[test]
     fn open_brace() {
-        let source = source::File::new("{".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load("{");
         assert_eq!(tokens, vec![Token::OpenBrace(s.span(1))],);
     }
 
     #[test]
     fn close_brace() {
-        let source = source::File::new("}".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load("}");
         assert_eq!(tokens, vec![Token::CloseBrace(s.span(1))],);
     }
 
     #[test]
     fn colon() {
-        let source = source::File::new(":".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load(":");
         assert_eq!(tokens, vec![Token::Colon(s.span(1))],);
     }
 
     #[test]
     fn all_0() {
-        let source = source::File::new("_abc: {{\n    [-]\n}^Xy1;}".to_string());
-        let mut s = span::Generator::new(&source);
-        let tokens = lex(&source);
+        let (mut s, tokens) = load("_abc: {{\n    [-]\n}^Xy1;}");
         assert_eq!(
             tokens,
             vec![
@@ -258,10 +229,7 @@ mod tests {
                     newline: true,
                 },
                 Token::CloseBrace(s.span(1)),
-                Token::Ident {
-                    span: s.skip(1).span(3),
-                    value: "Xy1".to_string(),
-                },
+                ident("Xy1", s.skip(1).span(3)),
                 Token::Linebreak {
                     span: s.span(1),
                     newline: false,
