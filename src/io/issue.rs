@@ -6,7 +6,8 @@ use std::fmt;
 use super::*;
 use source;
 
-struct SpanDisplay {
+/*
+struct SpanDisplayData {
     filepath: String,
     line: u32,
     col: u32,
@@ -16,8 +17,8 @@ struct SpanDisplay {
     byte_end: usize,
 }
 
-impl SpanDisplay {
-    fn new(span: &source::Span) -> SpanDisplay {
+impl SpanDisplayData {
+    fn new(span: &source::Span) -> SpanDisplayData {
         let line_str = span.src.contents[span.start..span.end()].to_string();
         let byte_end = line_str.len();
         let len = line_str.chars().count() as u32;
@@ -33,7 +34,7 @@ impl SpanDisplay {
     }
 }
 
-impl fmt::Display for SpanDisplay {
+impl fmt::Display for SpanDisplayData {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let location_info = format!("{}:{}:{} ", self.filepath, self.line, self.col);
         let indicator = " ".repeat(location_info.chars().count() + self.col as usize)
@@ -44,6 +45,7 @@ impl fmt::Display for SpanDisplay {
         write!(f, "{}{}\n{}", location_info, line_str, indicator)
     }
 }
+*/
 
 #[derive(PartialEq)]
 pub struct Issue {
@@ -60,14 +62,13 @@ impl Issue {
             message: message.to_string(),
         }
     }
+}
 
-    pub fn show(&self) {
+impl fmt::Display for Issue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self.span {
-            Some(s) => message(
-                self.severity,
-                &format!("{}:\n    {}", SpanDisplay::new(&s), self.message),
-            ),
-            None => message(self.severity, &self.message),
+            Some(s) => write!(f, "{}: {}:\n    {}", self.severity, s, self.message),
+            None => write!(f, "{}: {}", self.severity, &self.message),
         }
     }
 }

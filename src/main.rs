@@ -9,7 +9,7 @@ fn main() {
         let source = match source::File::open(path, &options) {
             Ok(s) => std::rc::Rc::new(s),
             Err(i) => {
-                io::message(io::Error, &i);
+                // io::message(io::Error, &i);
                 ::std::process::exit(1);
             }
         };

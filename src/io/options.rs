@@ -64,10 +64,4 @@ impl Options {
     pub fn show_issue(&self, issue: &Issue) {
         eprintln!("{:?}", issue);
     }
-
-    pub fn debug(&self, msg: &str) {
-        if self.debug {
-            message(Debug, msg);
-        }
-    }
 }

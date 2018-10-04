@@ -1,28 +1,26 @@
 use runtime::Op;
 use source;
+use source::span::Span;
 use source::token::Token;
 use std::rc::Rc;
 use std::str::CharIndices;
 
-pub struct Tokens<'s> {
-    source: &'s Rc<source::File>,
-    chars: CharIndices<'s>,
-}
+type TokenIter = Span;
 
-impl<'s> Tokens<'s> {
-    fn new(file: &'s Rc<source::File>) -> Tokens<'s> {
-        Tokens {
-            source: file,
-            chars: file.contents.char_indices(),
-        }
+impl TokenIter {
+    fn char_indices<'a>(&'a self) -> CharIndices<'a> {
+        self.src.contents[self.end_byte..].char_indices()
     }
 
-    fn span_to(&self, end: CharIndices<'s>) -> source::Span {
-        source::Span::from_indices(self.source.clone(), self.chars.clone(), end)
+    fn span_to(&self, mut end: CharIndices) -> Span {
+        self.span_to_byte(match end.next() {
+            Some((i, _)) => i,
+            None => self.src.contents.len(),
+        })
     }
 
     fn lex_bf(&self) -> Option<Token> {
-        let mut chars = self.chars.clone();
+        let mut chars = self.char_indices();
         let (_, c) = chars.next()?;
         let op = Op::new(c)?;
         let span = self.span_to(chars);
@@ -30,7 +28,7 @@ impl<'s> Tokens<'s> {
     }
 
     fn lex_single_char_token(&self) -> Option<Token> {
-        let mut chars = self.chars.clone();
+        let mut chars = self.char_indices();
         let (_, c) = chars.next()?;
         let span = self.span_to(chars);
         match c {
@@ -50,7 +48,7 @@ impl<'s> Tokens<'s> {
     }
 
     fn lex_ident(&self) -> Option<Token> {
-        let mut chars = self.chars.clone();
+        let mut chars = self.char_indices();
         let mut prev = chars.clone();
         let mut ident = None;
         while let Some((_, c)) = chars.next() {
@@ -73,7 +71,7 @@ impl<'s> Tokens<'s> {
     }
 }
 
-impl<'s> Iterator for Tokens<'s> {
+impl Iterator for TokenIter {
     type Item = Token;
 
     fn next(&mut self) -> Option<Token> {
@@ -83,24 +81,25 @@ impl<'s> Iterator for Tokens<'s> {
                 .or_else(|| self.lex_single_char_token())
                 .or_else(|| self.lex_ident())
             {
-                Some(t) => {
-                    while match self.chars.clone().next() {
-                        Some((i, _)) => i,
-                        None => self.source.contents.len(),
-                    } < t.span().end()
-                    {
-                        self.chars.next();
-                    }
-                    return Some(t);
+                Some(token) => {
+                    *self = token.span().clone();
+                    return Some(token);
                 }
-                None => self.chars.next()?,
+                None => {
+                    let span = {
+                        let mut chars = self.char_indices();
+                        chars.next()?;
+                        self.span_to(chars)
+                    };
+                    *self = span;
+                }
             };
         }
     }
 }
 
 pub fn lex(file: Rc<source::File>) -> Vec<Token> {
-    Tokens::new(&file).collect()
+    Span::at_start_of(file).collect()
 }
 
 #[cfg(test)]

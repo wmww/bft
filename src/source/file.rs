@@ -12,7 +12,7 @@ pub struct File {
 
 impl File {
     pub fn open(path: &str, options: &io::Options) -> Result<File, String> {
-        options.debug(&format!("Reading {}", path));
+        //options.debug(&format!("Reading {}", path));
         let mut f = match std::fs::File::open(path.clone()) {
             Result::Ok(v) => v,
             Result::Err(e) => return Err(format!("'{}': {}", path, e.to_string())),
