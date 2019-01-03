@@ -168,3 +168,15 @@ fn add() {
 
     test.run();
 }
+
+#[test]
+fn wrapping_add_and_subtract() {
+    let mut test = TestCase::new();
+
+    test.code = "+>-";
+    test.initial_data = vec![255, 0];
+    test.expected_data = vec![0, 255];
+    test.expected_ptr = 1;
+
+    test.run();
+}
