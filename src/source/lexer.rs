@@ -8,29 +8,29 @@ use std::str::CharIndices;
 type TokenIter = Span;
 
 impl TokenIter {
-    fn char_indices<'a>(&'a self) -> CharIndices<'a> {
-        self.src.contents[self.end_byte..].char_indices()
+    fn char_indices<'a>(&'a self) -> (usize, CharIndices<'a>) {
+        (self.end_byte, self.src.contents[self.end_byte..].char_indices())
     }
 
-    fn span_to(&self, mut end: CharIndices) -> Span {
+    fn span_to(&self, offset: usize, mut end: CharIndices) -> Span {
         self.span_to_byte(match end.next() {
-            Some((i, _)) => i,
+            Some((i, _)) => offset + i,
             None => self.src.contents.len(),
         })
     }
 
     fn lex_bf(&self) -> Option<Token> {
-        let mut chars = self.char_indices();
+        let (offset, mut chars) = self.char_indices();
         let (_, c) = chars.next()?;
         let op = Op::new(c)?;
-        let span = self.span_to(chars);
+        let span = self.span_to(offset, chars);
         Some(Token::Bf(op, span))
     }
 
     fn lex_single_char_token(&self) -> Option<Token> {
-        let mut chars = self.char_indices();
+        let (offset, mut chars) = self.char_indices();
         let (_, c) = chars.next()?;
-        let span = self.span_to(chars);
+        let span = self.span_to(offset, chars);
         match c {
             ';' => Some(Token::Linebreak {
                 span,
@@ -48,7 +48,7 @@ impl TokenIter {
     }
 
     fn lex_ident(&self) -> Option<Token> {
-        let mut chars = self.char_indices();
+        let (offset, mut chars) = self.char_indices();
         let mut prev = chars.clone();
         let mut ident = None;
         while let Some((_, c)) = chars.next() {
@@ -65,7 +65,7 @@ impl TokenIter {
             }
         }
         ident.map(|ident| {
-            let span = self.span_to(prev);
+            let span = self.span_to(offset, prev);
             Token::Ident(ident, span)
         })
     }
@@ -76,6 +76,7 @@ impl Iterator for TokenIter {
 
     fn next(&mut self) -> Option<Token> {
         loop {
+            let end_byte_at_start = self.end_byte;
             match None
                 .or_else(|| self.lex_bf())
                 .or_else(|| self.lex_single_char_token())
@@ -87,13 +88,14 @@ impl Iterator for TokenIter {
                 }
                 None => {
                     let span = {
-                        let mut chars = self.char_indices();
+                        let (offset, mut chars) = self.char_indices();
                         chars.next()?;
-                        self.span_to(chars)
+                        self.span_to(offset, chars)
                     };
                     *self = span;
                 }
             };
+            assert!(self.end_byte > end_byte_at_start);
         }
     }
 }
@@ -204,6 +206,57 @@ mod tests {
     fn colon() {
         let (mut s, tokens) = load(":");
         assert_eq!(tokens, vec![Token::Colon(s.span(1))],);
+    }
+
+    #[test]
+    fn newlines() {
+        let (mut s, tokens) = load("\n..\n.;.\n.");
+
+        let lines = vec![
+            (0, 0),
+            (1, 3),
+            (1, 3),
+            (1, 3),
+            (4, 7),
+            (4, 7),
+            (4, 7),
+            (4, 7),
+            (8, 9)
+        ];
+
+        assert_eq!(tokens.len(), lines.len());
+
+        for i in 0..tokens.len() {
+            assert_eq!(tokens[i].span().line_start_byte, lines[i].0, "Token {} line start byte", i);
+            assert_eq!(tokens[i].span().line_end_byte, lines[i].1, "Token {} line end byte", i);
+        }
+
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Linebreak {
+                    span: s.span(1),
+                    newline: true,
+                },
+                Op::Output.token(s.span(1)),
+                Op::Output.token(s.span(1)),
+                Token::Linebreak {
+                    span: s.span(1),
+                    newline: true,
+                },
+                Op::Output.token(s.span(1)),
+                Token::Linebreak {
+                    span: s.span(1),
+                    newline: false,
+                },
+                Op::Output.token(s.span(1)),
+                Token::Linebreak {
+                    span: s.span(1),
+                    newline: true,
+                },
+                Op::Output.token(s.span(1)),
+            ]
+        )
     }
 
     #[test]

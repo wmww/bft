@@ -5,7 +5,7 @@ use std::rc::Rc;
 use io;
 use source::File;
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Span {
     pub src: Rc<File>,
     pub start_byte: usize,
@@ -21,7 +21,9 @@ fn find_eol_byte(file: &File, start: usize) -> usize {
     if start >= file.contents.len() {
         return start;
     }
+    let offset = start;
     for (i, c) in file.contents[start..].char_indices() {
+        let i = i + offset;
         if c == '\n' {
             return i;
         }
@@ -47,12 +49,15 @@ impl Span {
     fn advance_start_to(&mut self, start_byte: usize) {
         assert!(start_byte >= self.start_byte);
         assert!(start_byte <= self.end_byte);
-        let mut chars = self.src.contents[self.end_byte..].char_indices();
+        let offset = self.start_byte;
+        let mut chars = self.src.contents[self.start_byte..].char_indices();
         loop {
-            let (i, c) = chars.next().unwrap_or((self.src.contents.len(), '\0'));
+            let (i, c) = chars.next().unwrap_or((self.src.contents.len() - offset, '\0'));
+            let i = i + offset;
             if i == start_byte {
                 break;
             }
+            assert!(i < start_byte);
             // TODO: Feed in a file with tabs; see they are not spaced correctly; make tabs increment col by 6;
             //       still doesn't look right; write a complex algorithm to correctly space tabs for any width;
             //       realize unicode is a thing; look for a std lib function to give the width of a character;
@@ -69,7 +74,7 @@ impl Span {
                     .clone()
                     .next()
                     .unwrap_or((self.src.contents.len(), '\0'))
-                    .0;
+                    .0 + offset;
                 self.line_end_byte = find_eol_byte(&*self.src, self.line_start_byte);
             }
         }
@@ -79,9 +84,11 @@ impl Span {
     fn advance_end_to(&mut self, end_byte: usize) {
         assert!(end_byte >= self.end_byte);
         assert!(end_byte <= self.src.contents.len());
+        let offset = self.end_byte;
         let mut chars = self.src.contents[self.end_byte..].char_indices();
         loop {
-            let (i, c) = chars.next().unwrap_or((self.src.contents.len(), '\0'));
+            let (i, _) = chars.next().unwrap_or((self.src.contents.len() - offset, '\0'));
+            let i = i + offset;
             if i == end_byte {
                 break;
             }
@@ -132,11 +139,13 @@ impl fmt::Display for Span {
     }
 }
 
+/*
 impl fmt::Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}..{}", self.start_byte, self.end_byte)
     }
 }
+*/
 
 pub struct Generator {
     src: Rc<File>,

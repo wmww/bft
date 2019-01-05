@@ -43,7 +43,7 @@ impl fmt::Display for Token {
             Token::OpenBrace(_) => write!(f, "{{"),
             Token::CloseBrace(_) => write!(f, "}}"),
             Token::Colon(_) => write!(f, ":"),
-            Token::Bf(op, _) => write!(f, "{}", op),
+            Token::Bf(op, _) => write!(f, "'{}'", op),
         }
     }
 }

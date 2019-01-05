@@ -1,4 +1,4 @@
-use super::*;
+    use super::*;
 
 struct TestCase {
     code: &'static str,
