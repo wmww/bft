@@ -52,7 +52,9 @@ impl Span {
         let offset = self.start_byte;
         let mut chars = self.src.contents[self.start_byte..].char_indices();
         loop {
-            let (i, c) = chars.next().unwrap_or((self.src.contents.len() - offset, '\0'));
+            let (i, c) = chars
+                .next()
+                .unwrap_or((self.src.contents.len() - offset, '\0'));
             let i = i + offset;
             if i == start_byte {
                 break;
@@ -74,7 +76,8 @@ impl Span {
                     .clone()
                     .next()
                     .unwrap_or((self.src.contents.len(), '\0'))
-                    .0 + offset;
+                    .0
+                    + offset;
                 self.line_end_byte = find_eol_byte(&*self.src, self.line_start_byte);
             }
         }
@@ -87,7 +90,9 @@ impl Span {
         let offset = self.end_byte;
         let mut chars = self.src.contents[self.end_byte..].char_indices();
         loop {
-            let (i, _) = chars.next().unwrap_or((self.src.contents.len() - offset, '\0'));
+            let (i, _) = chars
+                .next()
+                .unwrap_or((self.src.contents.len() - offset, '\0'));
             let i = i + offset;
             if i == end_byte {
                 break;

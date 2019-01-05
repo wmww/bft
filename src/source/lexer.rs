@@ -9,7 +9,10 @@ type TokenIter = Span;
 
 impl TokenIter {
     fn char_indices<'a>(&'a self) -> (usize, CharIndices<'a>) {
-        (self.end_byte, self.src.contents[self.end_byte..].char_indices())
+        (
+            self.end_byte,
+            self.src.contents[self.end_byte..].char_indices(),
+        )
     }
 
     fn span_to(&self, offset: usize, mut end: CharIndices) -> Span {
@@ -221,14 +224,24 @@ mod tests {
             (4, 7),
             (4, 7),
             (4, 7),
-            (8, 9)
+            (8, 9),
         ];
 
         assert_eq!(tokens.len(), lines.len());
 
         for i in 0..tokens.len() {
-            assert_eq!(tokens[i].span().line_start_byte, lines[i].0, "Token {} line start byte", i);
-            assert_eq!(tokens[i].span().line_end_byte, lines[i].1, "Token {} line end byte", i);
+            assert_eq!(
+                tokens[i].span().line_start_byte,
+                lines[i].0,
+                "Token {} line start byte",
+                i
+            );
+            assert_eq!(
+                tokens[i].span().line_end_byte,
+                lines[i].1,
+                "Token {} line end byte",
+                i
+            );
         }
 
         assert_eq!(
