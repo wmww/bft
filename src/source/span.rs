@@ -157,6 +157,12 @@ pub struct Spanned<T> {
     pub value: T,
 }
 
+impl<T> Spanned<T> {
+    pub fn new(span: Span, value: T) -> Spanned<T> {
+        Spanned { span, value }
+    }
+}
+
 pub struct Generator {
     src: Rc<File>,
     current: usize,
