@@ -152,6 +152,11 @@ impl fmt::Debug for Span {
 }
 */
 
+pub struct Spanned<T> {
+    pub span: Span,
+    pub value: T,
+}
+
 pub struct Generator {
     src: Rc<File>,
     current: usize,

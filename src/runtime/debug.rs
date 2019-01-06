@@ -77,15 +77,34 @@ impl<
     }
 
     pub fn add_tokens(&mut self, tokens: &Vec<Token>) {
+        self.add_ops(
+            tokens
+                .iter()
+                .filter_map(|token| match token {
+                    Token::Bf(op, span) => Some((op.clone(), span.clone())),
+                    _ => None,
+                })
+                .collect(),
+        );
+    }
+
+    pub fn add_ops(&mut self, ops: Vec<(Op, Span)>) {
         let prev_end = self.code.len();
-        self.code
-            .extend(tokens.iter().filter_map(|token| match token {
-                Token::Bf(op, span) => Some((op.clone(), span.clone())),
-                _ => None,
-            }));
+        self.code.extend(ops);
         if self.stack.is_empty() && prev_end < self.code.len() {
             self.stack.push(prev_end);
         }
+    }
+
+    pub fn add_code(&mut self, source: &CodeSource) {
+        // TODO: We shouldn't need to clone the span
+        self.add_ops(
+            source
+                .get_code()
+                .iter()
+                .map(|spanned| (spanned.value, spanned.span.clone()))
+                .collect(),
+        );
     }
 
     pub fn queue_input_str(&mut self, input: &str) {

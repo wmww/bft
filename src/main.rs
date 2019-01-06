@@ -1,5 +1,6 @@
 #[macro_use]
 mod io;
+mod ast;
 mod runtime;
 mod source;
 
@@ -13,9 +14,9 @@ fn main() {
                 ::std::process::exit(1);
             }
         };
-        let tokens = source::lex(source);
+        let ast = ast::parse(source);
         let mut runtime = runtime::debug::Runtime::<u8>::new();
-        runtime.add_tokens(&tokens);
+        runtime.add_code(&ast);
         runtime.run(None, &mut |c| print!("{}", c));
     }
 }
