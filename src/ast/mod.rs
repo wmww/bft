@@ -1,19 +1,12 @@
-mod elem;
-mod op;
+mod node;
 
 use runtime;
-use source::File;
-use source::Span;
+use source;
 use source::Spanned;
-use std::rc::Rc;
 
-use self::elem::Elem;
-use self::op::Op;
-use self::op::Loop;
+pub use self::node::Node;
 
-type Seq<T> = Vec<T>;
-
-impl<T: runtime::CodeSource> runtime::CodeSource for Seq<T> {
+impl<T: runtime::CodeSource> runtime::CodeSource for Vec<T> {
     fn append_code_to(&self, code: &mut Vec<Spanned<runtime::Op>>) {
         for elem in self {
             elem.append_code_to(code);
@@ -21,9 +14,12 @@ impl<T: runtime::CodeSource> runtime::CodeSource for Seq<T> {
     }
 }
 
-pub type Root = Seq<Elem>;
-
-pub fn parse(file: Rc<File>) -> Root {
-    vec![]
+impl runtime::CodeSource for Spanned<runtime::Op> {
+    fn append_code_to(&self, code: &mut Vec<Spanned<runtime::Op>>) {
+        code.push(self.clone());
+    }
 }
 
+pub fn parse(_file: std::rc::Rc<source::File>) -> Vec<Node> {
+    vec![]
+}
