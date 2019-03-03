@@ -9,7 +9,11 @@ pub enum Node {
 impl ::runtime::CodeSource for Node {
     fn append_code_to(&self, code: &mut Vec<Spanned<runtime::Op>>) {
         match self {
-            Node::Bf(bf) => bf.append_code_to(code),
+            Node::Bf(bf) => {
+                for i in bf {
+                    code.push(i.clone());
+                }
+            }
             Node::Comment(_) => (),
         }
     }

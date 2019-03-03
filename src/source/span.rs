@@ -152,7 +152,7 @@ impl fmt::Debug for Span {
 }
 */
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Spanned<T> {
     pub span: Span,
     pub value: T,
