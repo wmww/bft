@@ -31,10 +31,8 @@ impl TestCase {
         }
         runtime.set_ptr(self.initial_ptr);
         runtime.queue_input_str(self.input);
-        let mut s = ::source::span::Generator::new(source.clone());
-        let mut tokens = ::source::lex(source);
-        // let tokens = code.iter().map(|op| op.token(s.span(0))).collect();
-        runtime.add_tokens(&tokens);
+        let ast = ::ast::parse(source);
+        runtime.add_code(&ast);
         let mut result_output = String::new();
         assert_eq!(
             runtime.run(Some(10000), &mut |c| result_output.push(c)),

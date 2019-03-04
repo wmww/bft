@@ -30,7 +30,7 @@ impl ::source::Parsable<()> for ImplicitComment {
             p.next_char();
         }
         if start != *p {
-            Ok(start.string_to(p))
+            Ok(start.string_between(p))
         } else {
             Err(None)
         }

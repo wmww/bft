@@ -1,14 +1,10 @@
 mod file;
-mod lexer;
-mod parser;
-pub mod span;
-mod token;
+mod parse;
+mod span;
 
 pub use self::file::File;
-pub use self::lexer::lex;
-pub use self::parser::Parsable;
-pub use self::parser::ParseResult;
-pub use self::parser::Parser;
+pub use self::parse::Parsable;
+pub use self::parse::ParseResult;
+pub use self::parse::Parser;
 pub use self::span::Span;
 pub use self::span::Spanned;
-pub use self::token::Token;

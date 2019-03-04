@@ -28,7 +28,7 @@ impl Parser {
         T::parse(&mut self.clone(), arg)
     }
 
-    pub fn string_to(&self, other: &Parser) -> String {
+    pub fn string_between(&self, other: &Parser) -> String {
         assert_eq!(self.file, other.file);
         self.file.contents[self.byte..other.byte].to_string()
     }
@@ -77,19 +77,14 @@ where
 {
     fn parse(p: &mut Parser, arg: U) -> ParseResult<Self> {
         let start_byte = p.byte;
-        let value = p.parse(arg)?;
+        let v = p.parse(arg)?;
         let end_byte = p.byte;
-        let span = ::source::Span {
-            src: p.file.clone(),
+        let s = ::source::Span {
+            file: p.file.clone(),
             start_byte,
             end_byte,
-            line: 0,
-            col: 0,
-            width: 0,
-            line_start_byte: start_byte,
-            line_end_byte: end_byte,
         };
-        Ok(::source::Spanned { span, value })
+        Ok(::source::Spanned { s, v })
     }
 }
 
@@ -133,17 +128,12 @@ mod tests {
         assert_eq!(
             r,
             Ok(::source::Spanned {
-                span: ::source::Span {
-                    src: p.file.clone(),
+                s: ::source::Span {
+                    file: p.file.clone(),
                     start_byte: 0,
                     end_byte: 3,
-                    line: 0,
-                    col: 0,
-                    width: 0,
-                    line_start_byte: 0,
-                    line_end_byte: 3,
                 },
-                value: ()
+                v: ()
             })
         );
     }

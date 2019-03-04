@@ -8,7 +8,6 @@ use super::*;
 use io;
 use io::Issue;
 use source::Span;
-use source::Token;
 
 pub struct Runtime<D> {
     code: Vec<(Op, Span)>,
@@ -76,18 +75,6 @@ impl<
         self.data[index] = value;
     }
 
-    pub fn add_tokens(&mut self, tokens: &Vec<Token>) {
-        self.add_ops(
-            tokens
-                .iter()
-                .filter_map(|token| match token {
-                    Token::Bf(op, span) => Some((op.clone(), span.clone())),
-                    _ => None,
-                })
-                .collect(),
-        );
-    }
-
     pub fn add_ops(&mut self, ops: Vec<(Op, Span)>) {
         let prev_end = self.code.len();
         self.code.extend(ops);
@@ -102,7 +89,7 @@ impl<
             source
                 .get_code()
                 .iter()
-                .map(|spanned| (spanned.value, spanned.span.clone()))
+                .map(|spanned| (spanned.v, spanned.s.clone()))
                 .collect(),
         );
     }
