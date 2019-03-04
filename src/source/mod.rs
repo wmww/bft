@@ -6,6 +6,8 @@ mod token;
 
 pub use self::file::File;
 pub use self::lexer::lex;
+pub use self::parser::Parsable;
+pub use self::parser::ParseResult;
 pub use self::parser::Parser;
 pub use self::span::Span;
 pub use self::span::Spanned;

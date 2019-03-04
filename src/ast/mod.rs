@@ -6,8 +6,6 @@ use source::Spanned;
 
 pub use self::node::Node;
 
-type ParseResult<T> = Result<T, Option<::io::Issue>>;
-
 impl<T: runtime::CodeSource> runtime::CodeSource for Vec<T> {
     fn append_code_to(&self, code: &mut Vec<Spanned<runtime::Op>>) {
         for elem in self {
@@ -16,6 +14,12 @@ impl<T: runtime::CodeSource> runtime::CodeSource for Vec<T> {
     }
 }
 
-pub fn parse(_file: std::rc::Rc<source::File>) -> Vec<Node> {
+pub fn parse(file: std::rc::Rc<source::File>) -> Vec<Node> {
+    let mut p = ::source::Parser::new(file);
+    match p.parse(()) {
+        Ok(v) => return v,
+        Err(None) => println!("Parse failed"),
+        Err(Some(issue)) => println!("Issue: {}", issue),
+    }
     vec![]
 }
