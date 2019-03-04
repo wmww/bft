@@ -79,12 +79,12 @@ where
         let start_byte = p.byte;
         let v = p.parse(arg)?;
         let end_byte = p.byte;
-        let s = ::source::Span {
+        let span = ::source::Span {
             file: p.file.clone(),
             start_byte,
             end_byte,
         };
-        Ok(::source::Spanned { s, v })
+        Ok(::source::Spanned { s: Some(span), v })
     }
 }
 
@@ -128,11 +128,11 @@ mod tests {
         assert_eq!(
             r,
             Ok(::source::Spanned {
-                s: ::source::Span {
+                s: Some(::source::Span {
                     file: p.file.clone(),
                     start_byte: 0,
                     end_byte: 3,
-                },
+                }),
                 v: ()
             })
         );

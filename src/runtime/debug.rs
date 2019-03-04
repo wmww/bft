@@ -7,10 +7,10 @@ use self::num_traits::*;
 use super::*;
 use io;
 use io::Issue;
-use source::Span;
+use source::Spanned;
 
 pub struct Runtime<D> {
-    code: Vec<(Op, Span)>,
+    code: Vec<Spanned<Op>>,
     stack: Vec<usize>,
     data: Vec<D>,
     ptr: usize,
@@ -75,23 +75,13 @@ impl<
         self.data[index] = value;
     }
 
-    pub fn add_ops(&mut self, ops: Vec<(Op, Span)>) {
+    pub fn add_code(&mut self, source: &CodeSource) {
+        // TODO: We shouldn't need to clone the span
         let prev_end = self.code.len();
-        self.code.extend(ops);
+        self.code.extend(source.get_code());
         if self.stack.is_empty() && prev_end < self.code.len() {
             self.stack.push(prev_end);
         }
-    }
-
-    pub fn add_code(&mut self, source: &CodeSource) {
-        // TODO: We shouldn't need to clone the span
-        self.add_ops(
-            source
-                .get_code()
-                .iter()
-                .map(|spanned| (spanned.v, spanned.s.clone()))
-                .collect(),
-        );
     }
 
     pub fn queue_input_str(&mut self, input: &str) {
@@ -102,7 +92,7 @@ impl<
 
     fn run_instr(&mut self, instr: usize) -> InstrResult {
         let ptr = self.ptr;
-        let op = self.code[instr].0;
+        let op = self.code[instr].v;
         match op {
             Op::Plus => {
                 let value = self.get_cell(ptr).wrapping_add(&D::one());
@@ -145,7 +135,7 @@ impl<
                         if instr >= self.code.len() {
                             break InstrResult::Abort(Abort::Completed);
                         }
-                        match self.code[instr].0 {
+                        match self.code[instr].v {
                             Op::Start => level += 1,
                             Op::End => level -= 1,
                             _ => (),
