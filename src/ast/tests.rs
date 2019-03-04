@@ -1,8 +1,7 @@
-use super::Op::*;
 use super::*;
 
 struct TestCase {
-    code: Vec<Op>,
+    code: &'static str,
     initial_data: Vec<u8>,
     initial_ptr: usize,
     input: &'static str,
@@ -14,7 +13,7 @@ struct TestCase {
 impl TestCase {
     fn new() -> TestCase {
         TestCase {
-            code: vec![],
+            code: "",
             initial_data: vec![],
             initial_ptr: 0,
             input: "",
@@ -25,13 +24,15 @@ impl TestCase {
     }
 
     fn run(self) {
+        let source = ::std::rc::Rc::new(::source::File::from_string(self.code.to_string()));
         let mut runtime = debug::Runtime::<u8>::new();
         for i in 0..self.initial_data.len() {
             runtime.set_cell(i, self.initial_data[i]);
         }
         runtime.set_ptr(self.initial_ptr);
         runtime.queue_input_str(self.input);
-        runtime.add_code(&self.code);
+        let ast = ::ast::parse(source);
+        runtime.add_code(&ast);
         let mut result_output = String::new();
         assert_eq!(
             runtime.run(Some(10000), &mut |c| result_output.push(c)),
@@ -71,7 +72,7 @@ fn test_system_empty_code() {
 fn op_plus() {
     let mut test = TestCase::new();
 
-    test.code = vec![Plus];
+    test.code = "+";
     test.expected_data = vec![1];
 
     test.run();
@@ -81,7 +82,7 @@ fn op_plus() {
 fn op_minus() {
     let mut test = TestCase::new();
 
-    test.code = vec![Minus];
+    test.code = "-";
     test.initial_data = vec![1];
     test.expected_data = vec![0];
 
@@ -92,7 +93,7 @@ fn op_minus() {
 fn op_right() {
     let mut test = TestCase::new();
 
-    test.code = vec![Right];
+    test.code = ">";
     test.expected_ptr = 1;
 
     test.run();
@@ -102,7 +103,7 @@ fn op_right() {
 fn op_left() {
     let mut test = TestCase::new();
 
-    test.code = vec![Left];
+    test.code = "<";
     test.initial_ptr = 1;
     test.expected_ptr = 0;
 
@@ -113,7 +114,7 @@ fn op_left() {
 fn op_output() {
     let mut test = TestCase::new();
 
-    test.code = vec![Output];
+    test.code = ".";
     test.initial_data = vec![97];
     test.expected_output = "a";
 
@@ -124,7 +125,7 @@ fn op_output() {
 fn op_input() {
     let mut test = TestCase::new();
 
-    test.code = vec![Input];
+    test.code = ",";
     test.input = "a";
     test.expected_data = vec![97];
 
@@ -135,10 +136,7 @@ fn op_input() {
 fn move_and_chage() {
     let mut test = TestCase::new();
 
-    // +>>+++>+<-
-    test.code = vec![
-        Plus, Right, Right, Plus, Plus, Plus, Right, Plus, Left, Minus,
-    ];
+    test.code = "+>>+++>+<-";
     test.expected_data = vec![1, 0, 2, 1];
     test.expected_ptr = 2;
 
@@ -149,8 +147,7 @@ fn move_and_chage() {
 fn loop_down() {
     let mut test = TestCase::new();
 
-    // [-]
-    test.code = vec![Start, Minus, End];
+    test.code = "[-]";
     test.initial_data = vec![27];
     test.expected_data = vec![0];
     test.expected_ptr = 0;
@@ -162,8 +159,7 @@ fn loop_down() {
 fn add() {
     let mut test = TestCase::new();
 
-    // [>+<-]
-    test.code = vec![Start, Right, Plus, Left, Minus, End];
+    test.code = "[>+<-]";
     test.initial_data = vec![21, 54];
     test.expected_data = vec![0, 75];
     test.expected_ptr = 0;
@@ -175,8 +171,7 @@ fn add() {
 fn wrapping_add_and_subtract() {
     let mut test = TestCase::new();
 
-    // +>-
-    test.code = vec![Plus, Right, Minus];;
+    test.code = "+>-";
     test.initial_data = vec![255, 0];
     test.expected_data = vec![0, 255];
     test.expected_ptr = 1;
