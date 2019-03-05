@@ -34,7 +34,9 @@ impl Parser {
     }
 
     pub fn next_char(&mut self) -> Option<char> {
-        // TODO: Test this heavily, there's a suprising amount to go wrong here
+        if self.byte >= self.file.contents.len() {
+            return None;
+        }
         let mut indicies = self.file.contents[self.byte..].char_indices();
         let (_, c) = indicies.next()?;
         let next = match indicies.next() {
@@ -46,6 +48,9 @@ impl Parser {
     }
 
     pub fn try_next_char(&mut self) -> Option<char> {
+        if self.byte >= self.file.contents.len() {
+            return None;
+        }
         self.file.contents[self.byte..].chars().next()
     }
 }
@@ -121,7 +126,27 @@ mod tests {
         let b = TestBuilder::new("abc");
         let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc");
-        assert_eq!(r, Ok(()),);
+        assert_eq!(r, Ok(()));
+    }
+
+    #[test]
+    fn parse_str_only_once() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse("abc");
+        assert_eq!(r, Ok(()));
+        let r = p.parse::<(), &str>("abc");
+        assert_eq!(r, Err(None));
+    }
+
+    #[test]
+    fn try_parse_str() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.try_parse("abc");
+        assert_eq!(r, Ok(()));
+        let r = p.try_parse("abc");
+        assert_eq!(r, Ok(()));
     }
 
     #[test]
@@ -129,7 +154,7 @@ mod tests {
         let b = TestBuilder::new("abc");
         let mut p = Parser::new(b.file.clone());
         let r = p.parse::<(), &str>("xyz");
-        assert_eq!(r, Err(None),);
+        assert_eq!(r, Err(None));
     }
 
     #[test]
@@ -170,5 +195,63 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc_");
         assert_eq!(r, Ok(vec![(), ()]),);
+    }
+
+    #[test]
+    fn next_char_first() {
+        let b = TestBuilder::new("ab");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.next_char(), Some('a'));
+    }
+
+    #[test]
+    fn try_next_char_first() {
+        let b = TestBuilder::new("ab");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.try_next_char(), Some('a'));
+    }
+
+    #[test]
+    fn next_char_advances() {
+        let b = TestBuilder::new("ab");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.next_char(), Some('a'));
+        assert_eq!(p.next_char(), Some('b'));
+    }
+
+    #[test]
+    fn try_next_char_doesnt_advance() {
+        let b = TestBuilder::new("ab");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.try_next_char(), Some('a'));
+        assert_eq!(p.try_next_char(), Some('a'));
+    }
+
+    #[test]
+    fn next_char_stops_at_end() {
+        let b = TestBuilder::new("ab");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.next_char(), Some('a'));
+        assert_eq!(p.next_char(), Some('b'));
+        assert_eq!(p.next_char(), None);
+        assert_eq!(p.next_char(), None);
+    }
+
+    #[test]
+    fn try_next_char_stops_at_end() {
+        let b = TestBuilder::new("ab");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.next_char(), Some('a'));
+        assert_eq!(p.next_char(), Some('b'));
+        assert_eq!(p.try_next_char(), None);
+    }
+
+    #[test]
+    fn next_char_handles_unicode() {
+        let b = TestBuilder::new("☺a");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.next_char(), Some('☺'));
+        assert_eq!(p.next_char(), Some('a'));
+        assert_eq!(p.next_char(), None);
     }
 }
