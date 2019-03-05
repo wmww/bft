@@ -34,11 +34,20 @@ impl Span {
 
 impl fmt::Display for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "…{}…",
-            &self.file.contents[self.start_byte..self.end_byte]
-        )
+        let len = self.file.contents.len();
+        if self.start_byte > len || self.end_byte > len {
+            write!(
+                f,
+                "Invalid span [{}—{}] (file length is {})",
+                self.start_byte, self.end_byte, len,
+            )
+        } else {
+            write!(
+                f,
+                "…{}…",
+                &self.file.contents[self.start_byte..self.end_byte],
+            )
+        }
     }
 }
 
@@ -46,7 +55,7 @@ impl fmt::Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}[{}…{}]: {}",
+            "{}[{}—{}]: {}",
             self.file.unwrap_path(),
             self.start_byte,
             self.end_byte,

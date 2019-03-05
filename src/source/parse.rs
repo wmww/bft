@@ -34,24 +34,27 @@ impl Parser {
     }
 
     pub fn next_char(&mut self) -> Option<char> {
-        if self.byte >= self.file.contents.len() {
-            return None;
-        }
-        let mut indicies = self.file.contents[self.byte..].char_indices();
-        let (_, c) = indicies.next()?;
-        let next = match indicies.next() {
-            Some((i, _)) => i,
-            None => self.file.contents.len(),
+        let (c, advance_by) = {
+            let slice = self.remaining_slice();
+            let mut indicies = slice.char_indices();
+            let (_, c) = indicies.next()?;
+            let advance_by = match indicies.next() {
+                Some((i, _)) => i,
+                None => slice.len(),
+            };
+            (c, advance_by)
         };
-        self.byte += next;
+        self.byte += advance_by;
         Some(c)
     }
 
     pub fn try_next_char(&mut self) -> Option<char> {
-        if self.byte >= self.file.contents.len() {
-            return None;
-        }
-        self.file.contents[self.byte..].chars().next()
+        self.remaining_slice().chars().next()
+    }
+
+    pub fn remaining_slice<'a>(&'a self) -> &'a str {
+        assert!(self.byte <= self.file.contents.len());
+        &self.file.contents[self.byte..]
     }
 }
 
@@ -84,6 +87,8 @@ where
         let start_byte = p.byte;
         let v = p.parse(arg)?;
         let end_byte = p.byte;
+        assert!(start_byte < p.file.contents.len());
+        assert!(end_byte <= p.file.contents.len());
         let span = ::source::Span {
             file: p.file.clone(),
             start_byte,

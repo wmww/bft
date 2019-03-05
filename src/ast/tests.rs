@@ -13,7 +13,6 @@ fn plus_op() {
 }
 
 #[test]
-#[ignore]
 fn all_ops() {
     let mut b = TestBuilder::new("[+--><.,]");
 
