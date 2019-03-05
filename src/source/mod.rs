@@ -1,6 +1,6 @@
 mod file;
 mod parse;
-mod span;
+pub mod span;
 
 pub use self::file::File;
 pub use self::parse::Parsable;

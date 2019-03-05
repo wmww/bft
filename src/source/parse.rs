@@ -105,6 +105,7 @@ where
         if vec.len() > 0 {
             Ok(vec)
         } else {
+            println!("Length is 0");
             Err(None)
         }
     }
@@ -113,28 +114,61 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn parser_from(source: &str) -> Parser {
-        Parser {
-            file: std::rc::Rc::new(::source::File::from_string(source.to_string())),
-            byte: 0,
-        }
-    }
+    use source::span::TestBuilder;
 
     #[test]
     fn parse_str() {
-        let mut p = parser_from("abc");
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc");
-        assert_eq!(
-            r,
-            Ok(::source::Spanned {
-                s: Some(::source::Span {
-                    file: p.file.clone(),
-                    start_byte: 0,
-                    end_byte: 3,
-                }),
-                v: ()
-            })
-        );
+        assert_eq!(r, Ok(()),);
+    }
+
+    #[test]
+    fn parse_failed_str() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse::<(), &str>("xyz");
+        assert_eq!(r, Err(None),);
+    }
+
+    #[test]
+    fn parse_spanned_str() {
+        let mut b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse("abc");
+        assert_eq!(r, Ok(b.span(3).around(())));
+    }
+
+    #[test]
+    fn parse_failed_spanned_str() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse::<::source::Spanned<()>, &str>("xyz");
+        assert_eq!(r, Err(None));
+    }
+
+    #[test]
+    fn parse_str_vec() {
+        let b = TestBuilder::new("abc_abc_abc_abc_");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse("abc_");
+        assert_eq!(r, Ok(vec![(), (), (), ()]),);
+    }
+
+    #[test]
+    fn parse_failed_str_vec() {
+        let b = TestBuilder::new("abc_abc_abc_abc_");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse::<Vec<()>, &str>("xyz_");
+        assert_eq!(r, Err(None));
+    }
+
+    #[test]
+    fn parse_partial_str_vec() {
+        let b = TestBuilder::new("abc_abc_aXY_abc_");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse("abc_");
+        assert_eq!(r, Ok(vec![(), ()]),);
     }
 }

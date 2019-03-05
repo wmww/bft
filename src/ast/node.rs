@@ -37,7 +37,7 @@ impl ::source::Parsable<()> for ImplicitComment {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Node {
     Bf(Vec<Spanned<runtime::Op>>),
     Comment(Spanned<String>),

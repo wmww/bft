@@ -26,6 +26,10 @@ impl Span {
             message: message.to_string(),
         }
     }
+
+    pub fn around<T>(self, v: T) -> Spanned<T> {
+        Spanned { s: Some(self), v }
+    }
 }
 
 impl fmt::Display for Span {
@@ -55,4 +59,34 @@ impl fmt::Debug for Span {
 pub struct Spanned<T> {
     pub s: Option<Span>,
     pub v: T, // Value
+}
+
+#[cfg(test)]
+pub struct TestBuilder {
+    pub file: ::std::rc::Rc<::source::File>,
+    pub span_byte: usize,
+}
+
+#[cfg(test)]
+impl TestBuilder {
+    pub fn new(code: &'static str) -> TestBuilder {
+        TestBuilder {
+            file: ::std::rc::Rc::new(::source::File::from_string(code.to_string())),
+            span_byte: 0,
+        }
+    }
+
+    pub fn span(&mut self, len: usize) -> Span {
+        let s = Span {
+            file: self.file.clone(),
+            start_byte: self.span_byte,
+            end_byte: self.span_byte + len,
+        };
+        self.span_byte += len;
+        s
+    }
+
+    pub fn _skip(&mut self, len: usize) {
+        self.span_byte += len;
+    }
 }

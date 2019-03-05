@@ -23,3 +23,6 @@ pub fn parse(file: std::rc::Rc<source::File>) -> Vec<Node> {
     }
     vec![]
 }
+
+#[cfg(test)]
+mod tests;
