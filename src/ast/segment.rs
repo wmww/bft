@@ -1,38 +1,15 @@
 use source::Spanned;
-
-// A comment made of non-bf characters on a line
-type ImplicitComment = String;
-
-impl ::source::Parsable<()> for ImplicitComment {
-    fn parse(p: &mut ::source::Parser, _: ()) -> ::source::ParseResult<Self> {
-        let start = p.clone();
-        loop {
-            // Break if at the end of line or end of file
-            if let None /*| Some('\n')*/ = p.try_next_char() {
-                break;
-            }
-            // Break if at a valid bf op
-            if let Ok(_) = p.try_parse::<::runtime::Op, ()>(()) {
-                break;
-            }
-            p.next_char();
-        }
-        if start != *p {
-            Ok(start.string_between(p))
-        } else {
-            Err(None)
-        }
-    }
-}
+use runtime;
+use source;
 
 #[derive(PartialEq)]
 pub enum Segment {
-    Bf(Vec<Spanned<::runtime::Op>>),
+    Bf(Vec<Spanned<runtime::Op>>),
     Comment(Spanned<String>),
 }
 
-impl ::source::Parsable<()> for Segment {
-    fn parse(p: &mut ::source::Parser, _: ()) -> ::source::ParseResult<Self> {
+impl source::Parsable<()> for Segment {
+    fn parse(p: &mut source::Parser, _: ()) -> source::ParseResult<Self> {
         if let Ok(s) = p.parse::<Spanned<ImplicitComment>, ()>(()) {
             Ok(Segment::Comment(s))
         } else if let Ok(ops) = p.parse(()) {
@@ -43,8 +20,8 @@ impl ::source::Parsable<()> for Segment {
     }
 }
 
-impl ::runtime::CodeSource for Segment {
-    fn append_code_to(&self, code: &mut Vec<Spanned<::runtime::Op>>) {
+impl runtime::CodeSource for Segment {
+    fn append_code_to(&self, code: &mut Vec<Spanned<runtime::Op>>) {
         match self {
             Segment::Bf(bf) => {
                 code.extend(bf.clone());
@@ -59,10 +36,47 @@ impl std::fmt::Debug for Segment {
         match self {
             Segment::Bf(bf) => write!(
                 f,
-                "({})",
+                "| {} |",
                 bf.into_iter().map(|i| i.v.get_char()).collect::<String>()
             ),
             Segment::Comment(comment) => write!(f, "{:?}", comment.v),
         }
+    }
+}
+
+
+// A comment made of non-bf characters on a line
+type ImplicitComment = String;
+
+impl source::Parsable<()> for ImplicitComment {
+    fn parse(p: &mut source::Parser, _: ()) -> source::ParseResult<Self> {
+        let start = p.clone();
+        loop {
+            // Break if at the end of line or end of file
+            if let None /*| Some('\n')*/ = p.try_next_char() {
+                break;
+            }
+            // Break if at a valid bf op
+            if let Ok(_) = p.try_parse::<runtime::Op, ()>(()) {
+                break;
+            }
+            p.next_char();
+        }
+        if start != *p {
+            Ok(start.string_between(p))
+        } else {
+            Err(None)
+        }
+    }
+}
+
+impl source::Parsable<()> for runtime::Op {
+    fn parse(p: &mut source::Parser, _: ()) -> source::ParseResult<Self> {
+        if let Some(c) = p.next_char() {
+            if let Some(op) = runtime::Op::new(c) {
+                return Ok(op);
+            }
+        }
+        Err(None)
     }
 }

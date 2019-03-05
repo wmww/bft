@@ -3,8 +3,6 @@ use std;
 extern crate clap;
 use self::clap::{App, Arg};
 
-use super::*;
-
 #[derive(Debug)]
 pub struct Options {
     pub filepath: Option<String>, // code to run
@@ -63,7 +61,9 @@ impl Options {
         return options;
     }
 
+    /*
     pub fn show_issue(&self, issue: &Issue) {
         eprintln!("{:?}", issue);
     }
+    */
 }

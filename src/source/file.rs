@@ -1,5 +1,3 @@
-use io;
-
 use std;
 use std::fmt;
 use std::io::Read;
@@ -11,7 +9,7 @@ pub struct File {
 }
 
 impl File {
-    pub fn open(path: &str, options: &io::Options) -> Result<File, String> {
+    pub fn open(path: &str) -> Result<File, String> {
         //options.debug(&format!("Reading {}", path));
         let mut f = match std::fs::File::open(path.clone()) {
             Result::Ok(v) => v,
@@ -28,6 +26,7 @@ impl File {
         })
     }
 
+    #[allow(dead_code)]
     pub fn from_string(contents: String) -> File {
         File {
             path: None,

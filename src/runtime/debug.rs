@@ -52,10 +52,12 @@ impl<
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_ptr(&self) -> usize {
         self.ptr
     }
 
+    #[allow(dead_code)]
     pub fn set_ptr(&mut self, ptr: usize) {
         self.ptr = ptr;
     }
@@ -84,6 +86,7 @@ impl<
         }
     }
 
+    #[allow(dead_code)]
     pub fn queue_input_str(&mut self, input: &str) {
         for c in input.chars().rev() {
             self.input_buffer.push(c);

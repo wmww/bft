@@ -1,7 +1,5 @@
 use std::fmt;
 
-use io;
-
 #[derive(Clone, PartialEq)]
 pub struct Span {
     pub file: std::rc::Rc<::source::File>,
@@ -10,6 +8,7 @@ pub struct Span {
 }
 
 impl Span {
+    /*
     pub fn between(a: &Span, b: &Span) -> Span {
         assert_eq!(a.file, b.file);
         Span {
@@ -26,6 +25,7 @@ impl Span {
             message: message.to_string(),
         }
     }
+    */
 
     pub fn around<T>(self, v: T) -> Spanned<T> {
         Spanned { s: Some(self), v }

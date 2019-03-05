@@ -104,7 +104,7 @@ where
             start_byte,
             end_byte,
         };
-        Ok(::source::Spanned { s: Some(span), v })
+        Ok(span.around(v))
     }
 }
 
@@ -125,7 +125,6 @@ where
         if vec.len() > 0 {
             Ok(vec)
         } else {
-            println!("Length is 0");
             Err(None)
         }
     }

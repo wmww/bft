@@ -1,6 +1,6 @@
 extern crate colored;
 
-use self::colored::*;
+// use self::colored::*;
 use std::fmt;
 
 use super::*;
