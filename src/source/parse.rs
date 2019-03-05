@@ -78,6 +78,16 @@ impl Parsable<&str> for () {
     }
 }
 
+impl<T, U> Parsable<U> for Box<T>
+where
+    T: Parsable<U>,
+    U: Clone,
+{
+    fn parse(p: &mut Parser, arg: U) -> ParseResult<Self> {
+        Ok(Box::new(p.parse(arg)?))
+    }
+}
+
 impl<T, U> Parsable<U> for ::source::Spanned<T>
 where
     T: Parsable<U>,

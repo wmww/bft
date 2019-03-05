@@ -9,16 +9,16 @@ fn main() {
     if let Some(ref path) = options.filepath {
         let source = match source::File::open(path, &options) {
             Ok(s) => std::rc::Rc::new(s),
-            Err(_) => {
-                // io::message(io::Error, &i);
+            Err(e) => {
+                println!("{}", e);
                 ::std::process::exit(1);
             }
         };
         println!("Source code: {}", source);
         let ast = ast::parse(source);
-        println!("AST: {:?}", ast);
+        println!("AST: {:#?}", ast);
         let mut runtime = runtime::debug::Runtime::<u8>::new();
-        runtime.add_code(&ast);
+        runtime.add_code(&*ast);
         runtime.run(None, &mut |c| print!("{}", c));
     }
 }

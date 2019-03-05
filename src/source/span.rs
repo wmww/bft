@@ -30,6 +30,14 @@ impl Span {
     pub fn around<T>(self, v: T) -> Spanned<T> {
         Spanned { s: Some(self), v }
     }
+
+    pub fn get_slice<'a>(&'a self) -> &'a str {
+        if self.start_byte > self.end_byte || self.end_byte > self.file.contents.len() {
+            &self.file.contents[self.file.contents.len()..]
+        } else {
+            &self.file.contents[self.start_byte..self.end_byte]
+        }
+    }
 }
 
 impl fmt::Display for Span {
@@ -38,15 +46,11 @@ impl fmt::Display for Span {
         if self.start_byte > len || self.end_byte > len {
             write!(
                 f,
-                "Invalid span [{}—{}] (file length is {})",
+                "Invalid span [{}…{}] (file length is {})",
                 self.start_byte, self.end_byte, len,
             )
         } else {
-            write!(
-                f,
-                "…{}…",
-                &self.file.contents[self.start_byte..self.end_byte],
-            )
+            write!(f, "[{}…{}]", self.start_byte, self.end_byte,)
         }
     }
 }
@@ -55,11 +59,10 @@ impl fmt::Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}[{}—{}]: {}",
+            "{}{}: \"{}\"",
             self.file.unwrap_path(),
-            self.start_byte,
-            self.end_byte,
-            self
+            self,
+            self.get_slice(),
         )
     }
 }
@@ -71,6 +74,7 @@ pub struct Spanned<T> {
 }
 
 #[cfg(test)]
+#[derive(Clone)]
 pub struct TestBuilder {
     pub file: ::std::rc::Rc<::source::File>,
     pub span_byte: usize,
