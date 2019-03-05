@@ -1,30 +1,22 @@
-mod node;
+mod root;
+mod section;
+mod segment;
 
 use runtime;
-use source;
 use source::Spanned;
 
-pub use self::node::Root;
+pub use self::root::parse;
+use self::section::Section;
+use self::segment::Segment;
 
-impl<T: runtime::CodeSource> runtime::CodeSource for Vec<T> {
-    fn append_code_to(&self, code: &mut Vec<Spanned<runtime::Op>>) {
-        for elem in self {
-            elem.append_code_to(code);
-        }
-    }
-}
-
-pub fn parse(file: std::rc::Rc<source::File>) -> Root {
-    let mut p = ::source::Parser::new(file);
-    match p.parse(()) {
-        Ok(v) => v,
-        Err(issue) => {
-            match issue {
-                Some(issue) => println!("Issue: {}", issue),
-                None => println!("Parse failed"),
+impl ::source::Parsable<()> for runtime::Op {
+    fn parse(p: &mut ::source::Parser, _: ()) -> ::source::ParseResult<Self> {
+        if let Some(c) = p.next_char() {
+            if let Some(op) = runtime::Op::new(c) {
+                return Ok(op);
             }
-            Root::empty()
         }
+        Err(None)
     }
 }
 

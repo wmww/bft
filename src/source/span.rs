@@ -73,6 +73,20 @@ pub struct Spanned<T> {
     pub v: T, // Value
 }
 
+impl<T> Spanned<T> {
+    pub fn new(v: T) -> Spanned<T> {
+        Spanned { s: None, v }
+    }
+}
+
+impl<T> std::ops::Deref for Spanned<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        &self.v
+    }
+}
+
 #[cfg(test)]
 #[derive(Clone)]
 pub struct TestBuilder {

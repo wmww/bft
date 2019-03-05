@@ -2,8 +2,8 @@ use super::*;
 use runtime::Op;
 use source::span::TestBuilder;
 
-fn check(file: ::std::rc::Rc<::source::File>, ast: Vec<node::Section>) {
-    assert_eq!(parse(file), node::Root::new(ast))
+fn check(file: ::std::rc::Rc<::source::File>, ast: Vec<Section>) {
+    assert_eq!(parse(file), root::Root::new(ast))
 }
 
 #[test]
@@ -12,9 +12,11 @@ fn plus_op() {
 
     check(
         b.file.clone(),
-        vec![node::Section::Line(b.clone().span(1).around(vec![
-            node::Segment::Bf(vec![b.span(1).around(Op::Plus)]),
-        ]))],
+        vec![Section::Line(
+            b.clone()
+                .span(1)
+                .around(vec![Segment::Bf(vec![b.span(1).around(Op::Plus)])]),
+        )],
     );
 }
 
@@ -24,8 +26,8 @@ fn all_ops() {
 
     check(
         b.file.clone(),
-        vec![node::Section::Line(b.clone().span(9).around(vec![
-            node::Segment::Bf(vec![
+        vec![Section::Line(b.clone().span(9).around(vec![Segment::Bf(
+            vec![
                 b.span(1).around(Op::Start),
                 b.span(1).around(Op::Plus),
                 b.span(1).around(Op::Minus),
@@ -35,7 +37,7 @@ fn all_ops() {
                 b.span(1).around(Op::Output),
                 b.span(1).around(Op::Input),
                 b.span(1).around(Op::End),
-            ]),
-        ]))],
+            ],
+        )]))],
     );
 }
