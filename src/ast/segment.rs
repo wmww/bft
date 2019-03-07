@@ -1,6 +1,6 @@
-use source::Spanned;
 use runtime;
 use source;
+use source::Spanned;
 
 #[derive(PartialEq)]
 pub enum Segment {
@@ -43,7 +43,6 @@ impl std::fmt::Debug for Segment {
         }
     }
 }
-
 
 // A comment made of non-bf characters on a line
 type ImplicitComment = String;

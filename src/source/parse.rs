@@ -8,7 +8,11 @@ pub struct Parser {
 impl Parser {
     pub fn new(file: std::rc::Rc<::source::File>) -> Parser {
         let end_byte = file.contents.len();
-        Parser { file, byte: 0, end_byte }
+        Parser {
+            file,
+            byte: 0,
+            end_byte,
+        }
     }
 
     pub fn parse<T, U>(&mut self, arg: U) -> ParseResult<T>
@@ -55,6 +59,7 @@ impl Parser {
         self.remaining_slice().chars().next()
     }
 
+    #[allow(dead_code)]
     pub fn set_end(&mut self, end_byte: usize) {
         assert!(self.byte <= end_byte);
         assert!(end_byte <= self.file.contents.len());
@@ -78,7 +83,7 @@ where
 
 impl Parsable<&str> for () {
     fn parse(p: &mut Parser, s: &str) -> ParseResult<Self> {
-        if p.file.contents[p.byte..].starts_with(s) {
+        if p.remaining_slice().starts_with(s) {
             p.byte += s.len();
             Ok(())
         } else {
@@ -158,6 +163,15 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc");
         assert_eq!(r, Ok(()));
+        let r = p.parse::<(), &str>("abc");
+        assert_eq!(r, Err(None));
+    }
+
+    #[test]
+    fn parse_str_does_not_overrun_early_end_byte() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        p.set_end(2);
         let r = p.parse::<(), &str>("abc");
         assert_eq!(r, Err(None));
     }
@@ -261,6 +275,16 @@ mod tests {
     }
 
     #[test]
+    fn next_char_stops_at_early_end_byte() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.next_char(), Some('a'));
+        p.set_end(2);
+        assert_eq!(p.next_char(), Some('b'));
+        assert_eq!(p.next_char(), None);
+    }
+
+    #[test]
     fn try_next_char_stops_at_end() {
         let b = TestBuilder::new("ab");
         let mut p = Parser::new(b.file.clone());
@@ -275,16 +299,6 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         assert_eq!(p.next_char(), Some('☺'));
         assert_eq!(p.next_char(), Some('a'));
-        assert_eq!(p.next_char(), None);
-    }
-
-    #[test]
-    fn next_char_stops_at_set_end_byte() {
-        let b = TestBuilder::new("abc");
-        let mut p = Parser::new(b.file.clone());
-        assert_eq!(p.next_char(), Some('a'));
-        p.set_end(2);
-        assert_eq!(p.next_char(), Some('b'));
         assert_eq!(p.next_char(), None);
     }
 }
