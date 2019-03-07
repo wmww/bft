@@ -2,11 +2,13 @@
 pub struct Parser {
     file: std::rc::Rc<::source::File>,
     byte: usize,
+    end_byte: usize,
 }
 
 impl Parser {
     pub fn new(file: std::rc::Rc<::source::File>) -> Parser {
-        Parser { file, byte: 0 }
+        let end_byte = file.contents.len();
+        Parser { file, byte: 0, end_byte }
     }
 
     pub fn parse<T, U>(&mut self, arg: U) -> ParseResult<T>
@@ -16,6 +18,7 @@ impl Parser {
         let mut child = self.clone();
         let result = T::parse(&mut child, arg);
         if let Ok(_) = result {
+            assert!(child.byte <= self.end_byte);
             self.byte = child.byte;
         }
         result
@@ -52,9 +55,15 @@ impl Parser {
         self.remaining_slice().chars().next()
     }
 
+    pub fn set_end(&mut self, end_byte: usize) {
+        assert!(self.byte <= end_byte);
+        assert!(end_byte <= self.file.contents.len());
+        self.end_byte = end_byte;
+    }
+
     pub fn remaining_slice<'a>(&'a self) -> &'a str {
-        assert!(self.byte <= self.file.contents.len());
-        &self.file.contents[self.byte..]
+        assert!(self.byte <= self.end_byte);
+        &self.file.contents[self.byte..self.end_byte]
     }
 }
 
@@ -266,6 +275,16 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         assert_eq!(p.next_char(), Some('☺'));
         assert_eq!(p.next_char(), Some('a'));
+        assert_eq!(p.next_char(), None);
+    }
+
+    #[test]
+    fn next_char_stops_at_set_end_byte() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        assert_eq!(p.next_char(), Some('a'));
+        p.set_end(2);
+        assert_eq!(p.next_char(), Some('b'));
         assert_eq!(p.next_char(), None);
     }
 }
