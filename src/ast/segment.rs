@@ -52,7 +52,7 @@ impl source::Parsable<()> for ImplicitComment {
         let start = p.clone();
         loop {
             // Break if at the end of line or end of file
-            if let None /*| Some('\n')*/ = p.try_next_char() {
+            if let None | Some('\n') = p.try_next_char() {
                 break;
             }
             // Break if at a valid bf op

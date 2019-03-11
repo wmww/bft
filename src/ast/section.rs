@@ -10,6 +10,7 @@ pub enum Section {
 impl ::source::Parsable<()> for Section {
     fn parse(p: &mut ::source::Parser, _: ()) -> ::source::ParseResult<Self> {
         if let Ok(s) = p.parse(()) {
+            let _ = p.parse::<(), &str>("\n");
             Ok(Section::Line(s))
         }
         /*else if let Ok(ops) = p.parse(()) {

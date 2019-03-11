@@ -113,7 +113,8 @@ impl TestBuilder {
         s
     }
 
-    pub fn _skip(&mut self, len: usize) {
+    pub fn skip<'a>(&'a mut self, len: usize) -> &'a mut TestBuilder {
         self.span_byte += len;
+        self
     }
 }
