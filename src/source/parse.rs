@@ -1,3 +1,5 @@
+extern crate regex;
+
 #[derive(Clone, PartialEq)]
 pub struct Parser {
     file: std::rc::Rc<::source::File>,
@@ -141,6 +143,27 @@ where
         } else {
             Err(None)
         }
+    }
+}
+
+impl Parsable<regex::Regex> for String {
+    fn parse(p: &mut Parser, re: regex::Regex) -> ParseResult<Self> {
+        let (result, advance) = if let Some(m) = re.find(p.remaining_slice()) {
+            (Ok(m.as_str().to_string()), m.end())
+        } else {
+            (Err(None), 0)
+        };
+        p.byte += advance;
+        result
+    }
+}
+
+impl Parsable<&str> for String {
+    fn parse(p: &mut Parser, re_raw: &str) -> ParseResult<Self> {
+        // TODO: throw previous expressions in a lazy static hachmap
+        let mut re = "^".to_string();
+        re.push_str(re_raw);
+        p.parse(regex::Regex::new(&re).unwrap())
     }
 }
 
@@ -300,5 +323,23 @@ mod tests {
         assert_eq!(p.next_char(), Some('☺'));
         assert_eq!(p.next_char(), Some('a'));
         assert_eq!(p.next_char(), None);
+    }
+
+    #[test]
+    fn parse_explicit_regex() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse(regex::Regex::new(r"^[\w]+").unwrap());
+        assert_eq!(r, Ok("abc".to_string()));
+        assert_eq!(p.byte, 3);
+    }
+
+    #[test]
+    fn parse_auto_regex() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse(r"[\w]+");
+        assert_eq!(r, Ok("abc".to_string()));
+        assert_eq!(p.byte, 3);
     }
 }
