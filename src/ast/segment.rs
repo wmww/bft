@@ -34,12 +34,8 @@ impl runtime::CodeSource for Segment {
 impl std::fmt::Debug for Segment {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Segment::Bf(bf) => write!(
-                f,
-                "| {} |",
-                bf.into_iter().map(|i| i.v.get_char()).collect::<String>()
-            ),
-            Segment::Comment(comment) => write!(f, "{:?}", comment.v),
+            Segment::Bf(bf) => write!(f, "Bf {:#?}", bf),
+            Segment::Comment(comment) => write!(f, "{:?}", comment),
         }
     }
 }

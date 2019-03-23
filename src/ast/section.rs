@@ -42,14 +42,8 @@ impl ::runtime::CodeSource for Section {
 impl std::fmt::Debug for Section {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Section::Line(line) => {
-                write!(f, "Line ")?;
-                if let Some(s) = &line.s {
-                    write!(f, "{}", s)?;
-                }
-                f.debug_list().entries(line.v.iter()).finish()
-            }
-            Section::Block(block) => write!(f, "{:?}", block),
+            Section::Line(line) => write!(f, "Line {:#?}", line),
+            Section::Block(block) => write!(f, "Block {:#?}", block),
         }
     }
 }

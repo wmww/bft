@@ -46,11 +46,11 @@ impl fmt::Display for Span {
         if self.start_byte > len || self.end_byte > len {
             write!(
                 f,
-                "Invalid span [{}…{}] (file length is {})",
+                "(invalid span {}…{} because file ends at {})",
                 self.start_byte, self.end_byte, len,
             )
         } else {
-            write!(f, "[{}…{}]", self.start_byte, self.end_byte,)
+            write!(f, "{}…{}", self.start_byte, self.end_byte,)
         }
     }
 }
@@ -67,7 +67,7 @@ impl fmt::Debug for Span {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq)]
 pub struct Spanned<T> {
     pub s: Option<Span>,
     pub v: T, // Value
@@ -84,6 +84,28 @@ impl<T> std::ops::Deref for Spanned<T> {
 
     fn deref(&self) -> &T {
         &self.v
+    }
+}
+
+impl<T> fmt::Debug for Spanned<T>
+where
+    T: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(span) = &self.s {
+            write!(f, "{:#?}{{{}}}", self.v, span,)
+        } else {
+            write!(f, "{:#?}", self.v,)
+        }
+    }
+}
+
+impl<T> fmt::Display for Spanned<T>
+where
+    T: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.v,)
     }
 }
 
