@@ -3,7 +3,7 @@ use runtime::Op;
 use source::span::TestBuilder;
 
 fn check(file: ::std::rc::Rc<::source::File>, ast: Vec<Section>) {
-    assert_eq!(parse(file), root::Root::new(ast))
+    assert_eq!(root::Root::new(ast), parse(file))
 }
 
 #[test]
@@ -97,6 +97,32 @@ comment]",
                 Segment::Comment(b.skip(1).span(7).around("comment".to_string())),
                 Segment::Bf(vec![b.span(1).around(Op::End)]),
             ])),
+        ],
+    );
+}
+
+#[test]
+fn basic_block() {
+    let mut b = TestBuilder::new(
+        "some_block:
+    +>+",
+    );
+
+    let mut l = b.clone();
+
+    check(
+        b.file.clone(),
+        vec![
+            Section::Line(l.span(11).around(vec![Segment::Comment(
+                b.span(11).around("some_block:".to_string()),
+            )])),
+            Section::Block(Box::new(vec![Section::Line(l.skip(5).span(3).around(
+                vec![Segment::Bf(vec![
+                    b.skip(5).span(1).around(Op::Plus),
+                    b.span(1).around(Op::Right),
+                    b.span(1).around(Op::Plus),
+                ])],
+            ))])),
         ],
     );
 }

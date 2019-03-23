@@ -1,22 +1,32 @@
 use super::Segment;
 use source::Spanned;
 
+struct Block {
+    sections: Box<Vec<Section>>,
+}
+
+impl ::source::Parsable<()> for Block {
+    fn parse(p: &mut ::source::Parser, _: ()) -> ::source::ParseResult<Self> {
+        let _ = p.parse::<String, &str>(r"\s+")?;
+        let sections = p.parse(())?;
+        Ok(Block { sections })
+    }
+}
+
 #[derive(PartialEq)]
 pub enum Section {
     Line(Spanned<Vec<Segment>>),
-    Block(Vec<Box<Section>>),
+    Block(Box<Vec<Section>>),
 }
 
 impl ::source::Parsable<()> for Section {
     fn parse(p: &mut ::source::Parser, _: ()) -> ::source::ParseResult<Self> {
-        if let Ok(s) = p.parse(()) {
-            let _ = p.parse::<(), &str>("\n");
+        if let Ok(b) = p.parse::<Block, ()>(()) {
+            Ok(Section::Block(b.sections))
+        } else if let Ok(s) = p.parse(()) {
+            let _ = p.parse::<(), &str>("\n"); // if it fails, that's fine (we might be at EOF)
             Ok(Section::Line(s))
-        }
-        /*else if let Ok(ops) = p.parse(()) {
-            Ok(Section::Block(ops))
-        }*/
-        else {
+        } else {
             Err(None)
         }
     }
@@ -31,7 +41,7 @@ impl ::runtime::CodeSource for Section {
                 }
             }
             Section::Block(block) => {
-                for section in block {
+                for section in block.iter() {
                     section.append_code_to(code);
                 }
             }
