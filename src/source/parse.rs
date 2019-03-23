@@ -178,6 +178,7 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc");
         assert_eq!(r, Ok(()));
+        assert_eq!(p.byte, 3);
     }
 
     #[test]
@@ -186,8 +187,10 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc");
         assert_eq!(r, Ok(()));
+        assert_eq!(p.byte, 3);
         let r = p.parse::<(), &str>("abc");
         assert_eq!(r, Err(None));
+        assert_eq!(p.byte, 3);
     }
 
     #[test]
@@ -197,6 +200,7 @@ mod tests {
         p.set_end(2);
         let r = p.parse::<(), &str>("abc");
         assert_eq!(r, Err(None));
+        assert_eq!(p.byte, 0);
     }
 
     #[test]
@@ -205,8 +209,10 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.try_parse("abc");
         assert_eq!(r, Ok(()));
+        assert_eq!(p.byte, 0);
         let r = p.try_parse("abc");
         assert_eq!(r, Ok(()));
+        assert_eq!(p.byte, 0);
     }
 
     #[test]
@@ -215,6 +221,7 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.parse::<(), &str>("xyz");
         assert_eq!(r, Err(None));
+        assert_eq!(p.byte, 0);
     }
 
     #[test]
@@ -223,6 +230,7 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc");
         assert_eq!(r, Ok(b.span(3).around(())));
+        assert_eq!(p.byte, 3);
     }
 
     #[test]
@@ -231,6 +239,7 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.parse::<::source::Spanned<()>, &str>("xyz");
         assert_eq!(r, Err(None));
+        assert_eq!(p.byte, 0);
     }
 
     #[test]
@@ -238,7 +247,8 @@ mod tests {
         let b = TestBuilder::new("abc_abc_abc_abc_");
         let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc_");
-        assert_eq!(r, Ok(vec![(), (), (), ()]),);
+        assert_eq!(r, Ok(vec![(), (), (), ()]));
+        assert_eq!(p.byte, 16);
     }
 
     #[test]
@@ -247,6 +257,7 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         let r = p.parse::<Vec<()>, &str>("xyz_");
         assert_eq!(r, Err(None));
+        assert_eq!(p.byte, 0);
     }
 
     #[test]
@@ -254,7 +265,8 @@ mod tests {
         let b = TestBuilder::new("abc_abc_aXY_abc_");
         let mut p = Parser::new(b.file.clone());
         let r = p.parse("abc_");
-        assert_eq!(r, Ok(vec![(), ()]),);
+        assert_eq!(r, Ok(vec![(), ()]));
+        assert_eq!(p.byte, 8);
     }
 
     #[test]
@@ -262,6 +274,7 @@ mod tests {
         let b = TestBuilder::new("ab");
         let mut p = Parser::new(b.file.clone());
         assert_eq!(p.next_char(), Some('a'));
+        assert_eq!(p.byte, 1);
     }
 
     #[test]
@@ -269,6 +282,7 @@ mod tests {
         let b = TestBuilder::new("ab");
         let mut p = Parser::new(b.file.clone());
         assert_eq!(p.try_next_char(), Some('a'));
+        assert_eq!(p.byte, 0);
     }
 
     #[test]
@@ -277,6 +291,7 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         assert_eq!(p.next_char(), Some('a'));
         assert_eq!(p.next_char(), Some('b'));
+        assert_eq!(p.byte, 2);
     }
 
     #[test]
@@ -285,6 +300,7 @@ mod tests {
         let mut p = Parser::new(b.file.clone());
         assert_eq!(p.try_next_char(), Some('a'));
         assert_eq!(p.try_next_char(), Some('a'));
+        assert_eq!(p.byte, 0);
     }
 
     #[test]
@@ -295,6 +311,7 @@ mod tests {
         assert_eq!(p.next_char(), Some('b'));
         assert_eq!(p.next_char(), None);
         assert_eq!(p.next_char(), None);
+        assert_eq!(p.byte, 2);
     }
 
     #[test]
@@ -305,6 +322,7 @@ mod tests {
         p.set_end(2);
         assert_eq!(p.next_char(), Some('b'));
         assert_eq!(p.next_char(), None);
+        assert_eq!(p.byte, 2);
     }
 
     #[test]
@@ -314,6 +332,7 @@ mod tests {
         assert_eq!(p.next_char(), Some('a'));
         assert_eq!(p.next_char(), Some('b'));
         assert_eq!(p.try_next_char(), None);
+        assert_eq!(p.byte, 2);
     }
 
     #[test]
@@ -323,6 +342,7 @@ mod tests {
         assert_eq!(p.next_char(), Some('☺'));
         assert_eq!(p.next_char(), Some('a'));
         assert_eq!(p.next_char(), None);
+        assert_eq!(p.byte, 4);
     }
 
     #[test]
