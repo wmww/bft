@@ -362,4 +362,45 @@ mod tests {
         assert_eq!(r, Ok("abc".to_string()));
         assert_eq!(p.byte, 3);
     }
+
+    #[test]
+    fn parse_regex_fails() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse::<String, &str>(r"[0-9]+");
+        assert_eq!(r, Err(None));
+        assert_eq!(p.byte, 0);
+    }
+
+    #[test]
+    fn try_parse_auto_regex() {
+        let b = TestBuilder::new("abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.try_parse(r"[\w]+");
+        assert_eq!(r, Ok("abc".to_string()));
+        let r = p.try_parse(r"[\w]+");
+        assert_eq!(r, Ok("abc".to_string()));
+        assert_eq!(p.byte, 0);
+    }
+
+    #[test]
+    fn parse_multi_regex() {
+        let b = TestBuilder::new("abc12");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse(r"[a-z]+");
+        assert_eq!(r, Ok("abc".to_string()));
+        assert_eq!(p.byte, 3);
+        let r = p.parse(r"[0-9]+");
+        assert_eq!(r, Ok("12".to_string()));
+        assert_eq!(p.byte, 5);
+    }
+
+    #[test]
+    fn parse_regex_only_at_start() {
+        let b = TestBuilder::new("__abc");
+        let mut p = Parser::new(b.file.clone());
+        let r = p.parse::<String, &str>(r"[a-z]+");
+        assert_eq!(r, Err(None));
+        assert_eq!(p.byte, 0);
+    }
 }
