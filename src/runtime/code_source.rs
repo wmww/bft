@@ -19,14 +19,14 @@ impl<T: CodeSource> CodeSource for Vec<T> {
     }
 }
 
-impl CodeSource for Vec<Spanned<Op>> {
+impl CodeSource for Spanned<Op> {
     fn append_code_to(&self, code: &mut Vec<Spanned<Op>>) {
-        code.extend(self.clone());
+        code.push(self.clone());
     }
 }
 
-impl CodeSource for Vec<Op> {
+impl CodeSource for Op {
     fn append_code_to(&self, code: &mut Vec<Spanned<Op>>) {
-        code.extend(self.iter().map(|v| Spanned::new(*v)));
+        code.push(Spanned::new(self.clone()));
     }
 }
