@@ -15,12 +15,6 @@ impl Root {
     }
 }
 
-impl ::source::Parsable<()> for Root {
-    fn parse(p: &mut ::source::Parser, _: ()) -> ::source::ParseResult<Self> {
-        Ok(Self::new(p.parse(())?))
-    }
-}
-
 impl std::ops::Deref for Root {
     type Target = Vec<Section>;
 
@@ -32,19 +26,5 @@ impl std::ops::Deref for Root {
 impl std::fmt::Debug for Root {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "AST: {:#?}", self.ast)
-    }
-}
-
-pub fn parse(file: std::rc::Rc<::source::File>) -> Root {
-    let mut p = ::source::Parser::new(file);
-    match p.parse(()) {
-        Ok(v) => v,
-        Err(issue) => {
-            match issue {
-                Some(issue) => println!("Issue: {}", issue),
-                None => println!("Parse failed"),
-            }
-            Root::empty()
-        }
     }
 }

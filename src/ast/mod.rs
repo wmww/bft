@@ -1,10 +1,8 @@
 mod root;
 mod section;
-mod segment;
 
-pub use self::root::parse;
-use self::section::Section;
-use self::segment::Segment;
+pub use self::root::Root;
+pub use self::section::Section;
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
