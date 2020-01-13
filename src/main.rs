@@ -1,6 +1,10 @@
 #[macro_use]
+extern crate combine;
+
+#[macro_use]
 mod io;
 mod ast;
+mod parse;
 mod runtime;
 mod source;
 
@@ -15,10 +19,16 @@ fn main() {
             }
         };
         println!("Source code: {}", source);
-        let ast = ast::parse(source);
-        println!("{:#?}\n", ast);
-        let mut runtime = runtime::debug::Runtime::<u8>::new();
-        runtime.add_code(&*ast);
-        runtime.run(None, &mut |c| print!("{}", c));
+        match parse::parse(&source) {
+            Ok(ast) => {
+                println!("{:#?}\n", ast);
+                let mut runtime = runtime::debug::Runtime::<u8>::new();
+                runtime.add_code(&*ast);
+                runtime.run(None, &mut |c| print!("{}", c));
+            },
+            Err(err) => {
+                println!("Error: {}", err);
+            }
+        }
     }
 }

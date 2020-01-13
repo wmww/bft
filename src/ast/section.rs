@@ -1,5 +1,4 @@
 use runtime;
-use source;
 use source::Spanned;
 
 #[derive(PartialEq)]
